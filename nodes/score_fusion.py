@@ -18,6 +18,7 @@ def normalize(scores):
     return 0.1 + 0.9 * norm
 
 
+# 总评分计算
 class ScoreFusionNode(Node):
     name = 'score_fusion'
 
