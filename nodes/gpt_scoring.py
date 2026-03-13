@@ -11,7 +11,7 @@ from core.retry import retry
 
 client = OpenAI(
     base_url='https://aihubmix.com/v1',
-    api_key='sk-u6nqaTA9V41gl5ah0845FcF690F4442eBa969cF2Bd6d9f90',  # ModelScope Token
+    api_key='sk-u6nqaTA9V41gl5ah0845FcF690F4442eBa969cF2Bd6d9f90',  # Token
 )
 
 
@@ -87,7 +87,7 @@ class GPTScoringNode(Node):
             chunks = []
             self.limiter.acquire()
             response = client.chat.completions.create(
-                model='gpt-4o-free',  # ModelScope Model-Id
+                model='gpt-4o-free',  #  Model-Id
                 messages=[
                     {
                         'role': 'system',
@@ -129,24 +129,9 @@ class GPTScoringNode(Node):
                 image_scores = result.get("images")
                 for score_json in image_scores:
                     gpt_scores = score_json.get('scores')
-                    # 技术质量
-                    technical_quality = gpt_scores.get('technical_quality')
-                    # 构图质量
-                    composition_quality = gpt_scores.get('composition_quality')
-                    # 商业价值
-                    commercial_value = gpt_scores.get('commercial_value')
-                    # 后期质量
-                    post_processing = gpt_scores.get('post_processing')
-                    # 内容独特性
-                    content_uniqueness = gpt_scores.get('content_uniqueness')
-
                     file_name = score_json.get('file')
-                    total_score = 0.35 * aesthetic_scores.get(file_name)
-                    + 0.25 * commercial_value + 0.15 * technical_quality
-                    + 0.15 * composition_quality + 0.05 * post_processing + 0.05 * content_uniqueness
 
                     scores[file_name] = {
-                        'total_score': total_score,
                         **gpt_scores,
                         'aesthetic_score': aesthetic_scores.get(file_name)
                     }

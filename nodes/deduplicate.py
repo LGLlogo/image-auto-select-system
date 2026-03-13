@@ -27,5 +27,8 @@ class DeduplicateNode(Node):
                 selected.append(images[i])
                 selected_idx.append(i)
 
+        # 同步更新embeddings
+        embeddings = embeddings[selected_idx]
         ctx.set("images", selected[:30])
+        ctx.set("embeddings", embeddings[:30])
         print("After deduplicate:", selected)

@@ -15,14 +15,8 @@ class AestheticScoreNode(Node):
 
         with torch.no_grad():
             scores = self.model(emb).squeeze()
-            # Z-score
-            mean = scores.mean()
-            std = scores.std()
-            z = (scores - mean) / std
-            normalized = 5 + z * 2
-            normalized = np.clip(normalized, 0, 10)
 
-        return normalized.numpy()
+        return scores.numpy()
 
     def run(self, ctx):
         embeddings = ctx.get("embeddings")
