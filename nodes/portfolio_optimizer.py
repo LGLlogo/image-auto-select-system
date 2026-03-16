@@ -25,7 +25,7 @@ class PortfolioOptimizerNode(Node):
 
     def run(self, ctx):
 
-        files = ctx.get("images")
+        files = ctx.get("files")
         embeddings = ctx.get("embeddings")
         scores = ctx.get("scores")
 

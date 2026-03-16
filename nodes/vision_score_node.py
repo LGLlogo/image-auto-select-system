@@ -43,7 +43,7 @@ def composition_score(img):
 
 
 class VisionScoreNode(Node):
-    name = "vision_scoring"
+    name = "vision_score"
 
     def __init__(self, device="cpu"):
         self.device = device

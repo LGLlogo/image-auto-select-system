@@ -21,10 +21,17 @@ class AestheticScoreNode(Node):
     def run(self, ctx):
         embeddings = ctx.get("embeddings")
         aesthetic_scores = self.aesthetic_score_batch(embeddings)
-        scores = {}
-        images = ctx.get("images")
-        for path, score in zip(images, aesthetic_scores):
-            scores[path] = score
+        scores = ctx.get("scores").copy()
+        files = ctx.get("files")
+        aesthetic_scores_json = {}
+        for path, score in zip(files, aesthetic_scores):
+            scores[path] = {
+                **scores[path],
+                'aesthetic_score': score
+            }
+            aesthetic_scores_json[path] = score
 
-        ctx.set("aesthetic_scores", scores)
+        ctx.set("aesthetic_scores", aesthetic_scores_json)
+        ctx.set("scores", scores)
+
         print("Aesthetic scoring finished")
