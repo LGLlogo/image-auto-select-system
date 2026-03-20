@@ -6,10 +6,15 @@ import { runPipeline } from "./api"
 import useWS from "./useWS"
 
 export default function App() {
-  useWS()
+
   const [dir, setDir] = useState("")
+  const [taskId, setTaskId] = useState(null)
+  useWS(taskId)
   const start = () => {
-    runPipeline(dir)
+    runPipeline(dir).then(resp => {
+      // console.log(`result: ${resp.data["task_id"]}`)
+      setTaskId(resp.data["task_id"])
+    })
   }
 
   return (

@@ -127,7 +127,7 @@ class PortfolioOptimizerNode(Node):
 
         ctx.set("selected_images", selected_files)
         # state更新选片结果
-        update_results([{"file": f, **scores[f]} for f in selected_files])
+        update_results([{"file": f, **scores[f]} for f in selected_files], ctx.get("task_id"))
 
         for f in selected_files:
             print(scores[f]['total_score'], f)

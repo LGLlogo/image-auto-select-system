@@ -1,39 +1,104 @@
 import time
+import uuid
+from typing import Dict, Optional, Any
 
-state = {
-    "nodes": {},
-    "logs": [],
-    "results": [],
-    "dag": {
-        "nodes": [],
-        "edges": []
-    }
-}
+from pipeline.core.context import WorkflowContext
 
 
-def update_node(node, status, ctx):
+class TaskManager:
+    """任务调度器 单例模式"""
+    _instance = None
+    _states: Dict[str, 'TaskManager.State'] = {}
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(TaskManager, cls).__new__(cls)
+        return cls._instance
+
+    @classmethod
+    def create_task(cls) -> str:
+        """创建新任务并返回任务ID"""
+        task_id = str(uuid.uuid4())
+        cls._states[task_id] = cls.State(task_id)
+        return task_id
+
+    @classmethod
+    def remove_task(cls, task_id: str) -> bool:
+        """移除任务"""
+        if task_id in cls._states:
+            del cls._states[task_id]
+            return True
+        return False
+
+    @staticmethod
+    def get_state(task_id: str) -> Optional['TaskManager.State']:
+        """根据任务ID获取状态对象"""
+        return TaskManager._states.get(task_id)
+
+    #  State 状态类
+    class State:
+        def __init__(self, task_id):
+            self.task_id = task_id
+            self.nodes = {}
+            self.logs = []
+            self.results = []
+            self.dag = {
+                "nodes": [],
+                "edges": []
+            }
+
+        def add_node(self, node_id: str, data: Dict[str, Any]) -> None:
+            """添加节点"""
+            self.nodes[node_id] = data
+
+        def add_log(self, log: Dict[str, Any]) -> None:
+            """添加日志"""
+            self.logs.append(log)
+
+        def add_result(self, results: Dict[str, Any]) -> None:
+            """添加结果"""
+            self.results = results
+
+        def add_dag(self, dag_type: str, dag_json: Dict[str, Any]) -> None:
+            """添加结果"""
+            self.dag[dag_type].append(dag_json)
+
+        def __str__(self) -> str:
+            return f"State(task_id={self.task_id}, nodes={len(self.nodes)}, logs={len(self.logs)})"
+
+
+def update_node(node_id: str, status: str, ctx: WorkflowContext):
     """节点状态更新"""
-    state["nodes"][node] = {
+    task_id = ctx.get("task_id")
+    _state = TaskManager.get_state(task_id)
+    data = {
         "status": status,
         "image_count": len(ctx.get("files", [])),
-        "scores": ctx.get("scores", {}),
+        # 返回前 dict转list
+        "scores": [{"path": f, **v} for f, v in ctx.get("scores", {}).items()],
         "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     }
+    _state.add_node(node_id, data)
 
 
-def add_log(msg):
+def add_log(msg: str, task_id: str):
     """日志记录"""
-    state["logs"].append({
+    _state = TaskManager.get_state(task_id)
+    log = {
         "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())),
         "msg": msg
-    })
+    }
+    _state.add_log(log)
 
 
-def add_dag(dag_type, dag_json):
+def add_dag(dag_type, dag_json, task_id):
     """添加dag"""
-    state["dag"][dag_type].append(dag_json)
+    _state = TaskManager.get_state(task_id)
+    _state.add_dag(dag_type, dag_json)
 
 
-def update_results(results):
+def update_results(results, task_id):
+    """日志记录"""
+    _state = TaskManager.get_state(task_id)
     """更新最终选片"""
-    state["results"] = results
+    _state.add_result(results)

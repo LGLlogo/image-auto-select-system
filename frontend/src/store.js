@@ -7,9 +7,9 @@ export const useStore = create(set => ({
     dag: { nodes: [], edges: [] },
 
     setState: (data) => set({
-        nodes: data.nodes,
-        results: data.results,
-        logs: data.logs,
-        dag: data.dag
+        nodes: data.nodes ?? {},
+        results: data.results ?? [],
+        logs: data.logs ?? [],
+        dag: data.dag ?? { nodes: [], edges: [] }
     })
 }))

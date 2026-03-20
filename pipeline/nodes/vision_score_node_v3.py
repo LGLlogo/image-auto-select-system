@@ -1,25 +1,7 @@
-from concurrent.futures import ThreadPoolExecutor
-
 import numpy as np
-import cv2
 import torch
 import clip
 from pipeline.core.node import Node
-
-
-# ---------- 技术质量 ----------
-def compute_metrics(img):
-    # ---------- sharpness 锐度 ----------
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
-    # ---------- exposure 曝光 ----------
-    exposure = np.mean(gray)
-    # ---------- colorfulness 色彩丰富度 ----------
-    (B, G, R) = cv2.split(img)
-    rg = np.abs(R - G)
-    yb = np.abs(0.5 * (R + G) - B)
-    colorfulness = np.sqrt(np.mean(rg ** 2) + np.mean(yb ** 2))
-    return sharpness, exposure, colorfulness
 
 
 class VisionScoreNodeV3(Node):
@@ -67,6 +49,15 @@ class VisionScoreNodeV3(Node):
                 "a professional framing photography",
                 "a well structured image composition"
             ],
+            "post_processing": [
+                "professionally color graded photo",
+                "natural color correction, realistic tones",
+                "well balanced exposure and contrast",
+                "subtle and high quality post processing",
+                "clean and natural photo editing",
+                "soft and realistic lighting, no over processing",
+                "true to life colors, professional photography",
+            ],
             "content_uniqueness": [
                 "a creative photography concept",
                 "a unique artistic photograph",
@@ -75,13 +66,51 @@ class VisionScoreNodeV3(Node):
                 "a unique storytelling photograph",
                 "a fresh modern photography idea"
             ],
-            "negative_content": [
+            "negative_quality": [
+                # ---------- 技术质量 ----------
                 "a blurry photo",
                 "a low quality photograph",
                 "a poorly composed image",
                 "an amateur snapshot",
                 "a noisy low resolution image",
-                "a badly lit photograph"
+
+                # ---------- 技术质量 ----------
+                "blurry image, out of focus, low resolution",
+                "motion blur, camera shake, noisy image",
+                "overexposed or underexposed photo",
+                "poor lighting, low contrast, dull image",
+
+                # ---------- 构图问题 ----------
+                "bad composition, subject cut off, awkward framing",
+                "no clear subject, cluttered background",
+                "unbalanced composition, distracting elements",
+
+                # ---------- 后期问题 ----------
+                "overprocessed photo, excessive editing",
+                "oversaturated colors, unnatural tones",
+                "strong HDR effect, unrealistic lighting",
+                "heavy filters, artificial look",
+                "halo artifacts, sharpening artifacts",
+                "plastic skin, beauty filter",
+
+                # ---------- 商业价值 ----------
+                "snapshot, casual photo, not professional",
+                "random subject, no clear concept",
+                "non commercial image, lacks usability",
+
+                # ---------- 内容质量 ----------
+                "boring image, generic content, not unique",
+                "common scene, no visual interest",
+                "repetitive subject, lack of creativity",
+
+                # ---------- 美学问题 ----------
+                "ugly image, poor aesthetics",
+                "harsh lighting, unpleasant colors",
+                "visually unappealing composition",
+
+                # ---------- AI/伪影 ----------
+                "AI generated artifacts, unnatural texture",
+                "distorted objects, unrealistic details",
             ]
         }
 
@@ -118,32 +147,12 @@ class VisionScoreNodeV3(Node):
             score = sim.mean(axis=1)
             semantic_scores[key] = score
 
-        # ---------- 图像技术指标 ----------
-
-        sharpness_scores = []
-        exposure_scores = []
-        color_scores = []
-
-        # ---------- 多线程读取图片 ----------
-        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            results = list(executor.map(compute_metrics, images))
-
-            for s, e, c in results:
-                sharpness_scores.append(s)
-                exposure_scores.append(e)
-                color_scores.append(c)
-
-        sharpness_scores = np.array(sharpness_scores)
-        exposure_scores = np.array(exposure_scores)
-        color_scores = np.array(color_scores)
-
         commercial = semantic_scores.get("commercial_value", np.zeros(len(files)))
         composition = semantic_scores.get("composition_quality", np.zeros(len(files)))
         uniqueness = semantic_scores.get("content_uniqueness", np.zeros(len(files)))
         technical = semantic_scores.get("technical_quality", np.zeros(len(files)))
-        negative = semantic_scores.get("negative_content", np.zeros(len(files)))
-        # technical = normalize(sharpness_scores)
-        post = color_scores + exposure_scores
+        negative = semantic_scores.get("negative_quality", np.zeros(len(files)))
+        post = semantic_scores.get("post_processing", np.zeros(len(files)))
 
         # ---------- 保存结果 ----------
 

@@ -1,10 +1,13 @@
+import json
 import os
 import sys
 from fastapi import WebSocket, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import asyncio
-from backend.state import state
+
+from backend.WSManager import ws_manager
+from backend.state import TaskManager
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -28,25 +31,32 @@ class RunRequest(BaseModel):
 async def run_pipeline(req: RunRequest):
     """选择图片文件夹"""
     from backend.pipeline_runner import run_pipeline_workflow
-    asyncio.create_task(run_pipeline_workflow(req.image_dir))
+    task_id = TaskManager().create_task()
+    loop = asyncio.get_running_loop()  # ✅ 正确
+    asyncio.create_task(asyncio.to_thread(run_pipeline_workflow, req.image_dir, task_id, loop))
 
-    return {"status": "started"}
+    return {"status": "started", "task_id": task_id}
 
 
 @app.get("/dag_state")
-def get_state():
+def get_state(task_id):
     """获取节点状态"""
-    return state
+    return TaskManager.get_state(task_id)
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(ws: WebSocket):
-    await ws.accept()
-    clients.append(ws)
+@app.websocket("/ws/{task_id}")
+async def websocket_endpoint(ws: WebSocket, task_id: str):
+    await ws_manager.connect(task_id, ws)
 
     try:
         while True:
-            await ws.send_json(state)
-            await asyncio.sleep(0.5)
-    except:
-        clients.remove(ws)
+            # 接收客户端发送的消息
+            # await ws.receive_text()  # 保持连接
+            await ws.receive_text()  # 保持连接
+            if task_id is not None:
+                print(f"📥 收到消息: {task_id}")
+            await asyncio.sleep(1.5)
+            # print("after send")
+    except Exception as e:
+        ws_manager.disconnect(task_id, ws)
+        raise e

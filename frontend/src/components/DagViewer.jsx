@@ -27,6 +27,7 @@ export default function DagViewer() {
                 background:
                     nodes[n.id]?.status === "done" ? "#16a34a" :
                         nodes[n.id]?.status === "running" ? "#2563eb" :
+                        nodes[n.id]?.status === "fail" ? "#f2460d": 
                             "#6b7280",
                 color: "#fff",
                 borderRadius: 30,

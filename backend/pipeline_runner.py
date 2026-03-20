@@ -1,5 +1,9 @@
+import asyncio
 import os
 import torch
+
+from backend.WSManager import ws_manager
+from backend.state import TaskManager
 from pipeline.core.dag import DAG
 from pipeline.core.context import WorkflowContext
 from pipeline.core.executor import DAGExecutor
@@ -18,20 +22,20 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.set_num_threads(os.cpu_count())
 
 
-def build_dag(image_dir):
+def build_dag(image_dir, task_id):
     dag = DAG()
     num_workers = os.cpu_count()
-    dag.add_node(LoadImagesNode(image_dir=image_dir))
+    dag.add_node(LoadImagesNode(image_dir=image_dir), task_id)
     dag.add_node(ContentSafetyFilterNode(num_workers=num_workers,
-                                         device=device))
-    dag.add_node(QualityFilterNode(num_workers=num_workers))
+                                         device=device), task_id)
+    dag.add_node(QualityFilterNode(num_workers=num_workers), task_id)
     dag.add_node(CLIPEmbeddingNode(num_workers=num_workers,
-                                   device=device))
-    dag.add_node(DeduplicateNode())
-    dag.add_node(AestheticScoreNode())
+                                   device=device), task_id)
+    dag.add_node(DeduplicateNode(), task_id)
+    dag.add_node(AestheticScoreNode(), task_id)
     # dag.add_node(GPTScoringNode(batch_size=3, max_workers=3))
-    dag.add_node(VisionScoreNodeV3(num_workers=num_workers))
-    dag.add_node(ScoreFusionNode())
+    dag.add_node(VisionScoreNodeV3(num_workers=num_workers), task_id)
+    dag.add_node(ScoreFusionNode(), task_id)
     dag.add_node(
         PortfolioOptimizerNode(
             top_k=20,
@@ -39,25 +43,36 @@ def build_dag(image_dir):
             cluster_top_n=3,
             lambda_penalty=0.7,
             device=device
-        )
-    )
+        ), task_id)
     # dag.add_node(SelectTopNode())
 
-    dag.add_edge("load_images", "content_safety_filter")
-    dag.add_edge("content_safety_filter", "quality_filter")
-    dag.add_edge("quality_filter", "clip_embedding")
-    dag.add_edge("clip_embedding", "deduplicate")
-    dag.add_edge("deduplicate", "aesthetic_score")
-    dag.add_edge("aesthetic_score", "vision_score")
-    dag.add_edge("vision_score", "score_fusion")
-    dag.add_edge("score_fusion", "portfolio_optimizer")
+    dag.add_edge("load_images", "content_safety_filter", task_id)
+    dag.add_edge("content_safety_filter", "quality_filter", task_id)
+    dag.add_edge("quality_filter", "clip_embedding", task_id)
+    dag.add_edge("clip_embedding", "deduplicate", task_id)
+    dag.add_edge("deduplicate", "aesthetic_score", task_id)
+    dag.add_edge("aesthetic_score", "vision_score", task_id)
+    dag.add_edge("vision_score", "score_fusion", task_id)
+    dag.add_edge("score_fusion", "portfolio_optimizer", task_id)
     # dag.add_edge("portfolio_optimizer", "select_top")
 
     return dag
 
 
-async def run_pipeline_workflow(image_dir: str):
+def run_pipeline_workflow(image_dir: str, task_id: str, loop):
     ctx = WorkflowContext()
-    dag = build_dag(image_dir)
-    executor = DAGExecutor(dag, max_workers=2)
+    ctx.set("task_id", task_id)
+
+    def on_update(data):
+        asyncio.run_coroutine_threadsafe(
+            ws_manager.broadcast(task_id, data),
+            loop
+        )
+
+    dag = build_dag(image_dir, task_id)
+    executor = DAGExecutor(dag,
+                           max_workers=2,
+                           on_update=on_update)
+    # await asyncio.to_thread(executor.run, ctx)
     executor.run(ctx)
+    return task_id
