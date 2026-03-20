@@ -3,7 +3,7 @@ import time
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from backend.state import TaskManager, update_node, add_log
+from backend.state import TaskManager, update_node
 
 
 class DAGExecutor:
@@ -72,10 +72,8 @@ class DAGExecutor:
     def _run_node(self, node_id, ctx):
         """执行单节点"""
         node = self.nodes[node_id]
-        start = time.time()
         try:
             update_node(node_id, "running", ctx)
-            add_log(f"{node_id} started", ctx.get("task_id"))
             _state = TaskManager.get_state(ctx.get("task_id"))
 
             self._emit({
@@ -84,10 +82,7 @@ class DAGExecutor:
             })
 
             result = node.execute(ctx)  # ✅ 同步执行
-
-            cost = round(time.time() - start, 2)
             update_node(node_id, "done", ctx)
-            add_log(f"{node_id} done in ({cost}s)", ctx.get("task_id"))
             _state = TaskManager.get_state(ctx.get("task_id"))
 
             self._emit({
@@ -98,9 +93,7 @@ class DAGExecutor:
             return node_id, True
 
         except Exception as e:
-            cost = round(time.time() - start, 2)
             update_node(node_id, "fail", ctx)
-            add_log(f"{node_id} failed {e}", ctx.get("task_id"))
             _state = TaskManager.get_state(ctx.get("task_id"))
             self._emit({
                 "type": "node_error",

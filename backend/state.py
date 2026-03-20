@@ -40,7 +40,6 @@ class TaskManager:
         def __init__(self, task_id):
             self.task_id = task_id
             self.nodes = {}
-            self.logs = []
             self.results = []
             self.dag = {
                 "nodes": [],
@@ -51,10 +50,6 @@ class TaskManager:
             """添加节点"""
             self.nodes[node_id] = data
 
-        def add_log(self, log: Dict[str, Any]) -> None:
-            """添加日志"""
-            self.logs.append(log)
-
         def add_result(self, results: Dict[str, Any]) -> None:
             """添加结果"""
             self.results = results
@@ -64,7 +59,7 @@ class TaskManager:
             self.dag[dag_type].append(dag_json)
 
         def __str__(self) -> str:
-            return f"State(task_id={self.task_id}, nodes={len(self.nodes)}, logs={len(self.logs)})"
+            return f"State(task_id={self.task_id}, nodes={len(self.nodes)})"
 
 
 def update_node(node_id: str, status: str, ctx: WorkflowContext):
@@ -79,16 +74,6 @@ def update_node(node_id: str, status: str, ctx: WorkflowContext):
         "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     }
     _state.add_node(node_id, data)
-
-
-def add_log(msg: str, task_id: str):
-    """日志记录"""
-    _state = TaskManager.get_state(task_id)
-    log = {
-        "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())),
-        "msg": msg
-    }
-    _state.add_log(log)
 
 
 def add_dag(dag_type, dag_json, task_id):

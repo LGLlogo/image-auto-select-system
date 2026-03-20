@@ -133,9 +133,9 @@ class ContentSafetyFilterNode(Node):
         # embeddings = embeddings[keep_indices]
         images = [images[i] for i in keep_indices]
 
-        print("ContentSafetyFilter v3 result:")
-        print("kept:", len(keep_files))
-        print("removed:", removed)
+        super().log(ctx, "ContentSafetyFilter v3 result:")
+        super().log(ctx, f"kept: {len(keep_files)}")
+        super().log(ctx, f"removed: {removed}")
 
         ctx.set("files", keep_files)
         # ctx.set("embeddings", embeddings)

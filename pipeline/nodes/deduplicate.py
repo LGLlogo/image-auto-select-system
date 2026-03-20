@@ -41,4 +41,4 @@ class DeduplicateNode(Node):
         ctx.set("embeddings", embeddings)
         ctx.set("images", images)
         ctx.set("scores", filtered_scores)
-        print("After deduplicate:", len(selected))
+        super().log(ctx, f"After deduplicate: {len(selected)}")

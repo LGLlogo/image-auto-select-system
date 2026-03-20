@@ -169,4 +169,4 @@ class VisionScoreNodeV3(Node):
 
         ctx.set("scores", scores)
 
-        print("VisionScoreNode v3 finished")
+        super().log(ctx,"VisionScoreNode v3 finished")

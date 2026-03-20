@@ -3,6 +3,7 @@ import os
 import torch
 
 from backend.WSManager import ws_manager
+from backend.logger import TaskLogger
 from backend.state import TaskManager
 from pipeline.core.dag import DAG
 from pipeline.core.context import WorkflowContext
@@ -10,6 +11,7 @@ from pipeline.core.executor import DAGExecutor
 from pipeline.nodes.aesthetic_score import AestheticScoreNode
 from pipeline.nodes.content_safety_filter import ContentSafetyFilterNode
 from pipeline.nodes.deduplicate import DeduplicateNode
+from pipeline.nodes.file_storge import FileStorgeNode
 
 from pipeline.nodes.load_images import LoadImagesNode
 from pipeline.nodes.quality_filter import QualityFilterNode
@@ -44,7 +46,7 @@ def build_dag(image_dir, task_id):
             lambda_penalty=0.7,
             device=device
         ), task_id)
-    # dag.add_node(SelectTopNode())
+    dag.add_node(FileStorgeNode(), task_id)
 
     dag.add_edge("load_images", "content_safety_filter", task_id)
     dag.add_edge("content_safety_filter", "quality_filter", task_id)
@@ -54,7 +56,7 @@ def build_dag(image_dir, task_id):
     dag.add_edge("aesthetic_score", "vision_score", task_id)
     dag.add_edge("vision_score", "score_fusion", task_id)
     dag.add_edge("score_fusion", "portfolio_optimizer", task_id)
-    # dag.add_edge("portfolio_optimizer", "select_top")
+    dag.add_edge("portfolio_optimizer", "file_storge", task_id)
 
     return dag
 
@@ -68,6 +70,10 @@ def run_pipeline_workflow(image_dir: str, task_id: str, loop):
             ws_manager.broadcast(task_id, data),
             loop
         )
+
+    # 设置日志系统
+    logger = TaskLogger(task_id, emitter=on_update)
+    ctx.set("logger", logger)
 
     dag = build_dag(image_dir, task_id)
     executor = DAGExecutor(dag,

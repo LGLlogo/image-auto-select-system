@@ -69,5 +69,5 @@ class CLIPEmbeddingNode(Node):
         embeddings = self.compute_embeddings(valid_images)
         ctx.set("files", valid_files)
         ctx.set("embeddings", embeddings)
-        print(f"CLIP embeddings computed: {len(valid_files)}")
+        super().log(ctx, f"CLIP embeddings computed: {len(valid_files)}")
 

@@ -4,17 +4,23 @@ import { useStore } from "./store"
 export default function useWS(taskId) {
     console.log(taskId)
     const setState = useStore(s => s.setState)
+    const addLog = useStore(s => s.addLog)
 
     useEffect(() => {
         if (taskId) {
             const ws = new WebSocket(`ws://localhost:8000/ws/${taskId}`)
             ws.onmessage = (e) => {
                 const state = JSON.parse(e.data)
+                if (state.type === "log") {
+                    addLog(state)
+                }
+                else {
+                    setState(state)
+                }
                 // console.log(state.results)
-                setState(state)
             }
             // return () => ws.close()
         }
 
-    }, [setState, taskId])
+    }, [setState, addLog, taskId])
 }

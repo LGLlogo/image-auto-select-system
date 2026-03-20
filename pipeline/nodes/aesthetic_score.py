@@ -33,4 +33,4 @@ class AestheticScoreNode(Node):
         ctx.set("aesthetic_scores", aesthetic_scores_json)
         ctx.set("scores", scores)
 
-        print("Aesthetic scoring finished")
+        super().log(ctx,"Aesthetic scoring finished")

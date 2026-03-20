@@ -130,6 +130,6 @@ class PortfolioOptimizerNode(Node):
         update_results([{"file": f, **scores[f]} for f in selected_files], ctx.get("task_id"))
 
         for f in selected_files:
-            print(scores[f]['total_score'], f)
+            super().log(ctx, f"{scores[f]['total_score']}, {f}")
 
-        print(f"PortfolioOptimizer finished: {len(selected_files)} images")
+        super().log(ctx,f"PortfolioOptimizer finished: {len(selected_files)} images")

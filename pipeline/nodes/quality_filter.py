@@ -141,4 +141,4 @@ class QualityFilterNode(Node):
         ctx.set("images", images)
         ctx.set("scores", scores)
 
-        print("After quality filter:", len(keep_files))
+        super().log(ctx, f"After quality filter: {len(keep_files)}")

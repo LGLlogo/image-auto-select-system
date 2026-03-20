@@ -39,5 +39,4 @@ class LoadImagesNode(Node):
 
         ctx.set("files", files)
         ctx.set("images", images)
-
-        print("Loaded images:", len(files))
+        super().log(ctx, f"Loaded images: {len(files)}")
