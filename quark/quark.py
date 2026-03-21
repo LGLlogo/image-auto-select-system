@@ -11,7 +11,7 @@ def download_images_from_quark(folder_name: str, desc_save_dir: str, logger):
         logger.info(f"找到 {len(results['data']['list'])} 个文件")
         # print(results['data']['list'])
         folder_id = results['data']['list'][0]['fid']
-        files = client.list_files(folder_id, size=50)
+        files = client.list_files(folder_id, size=20)
         files = files['data']['list']
         # print(len(files))
         file_ids = [file['fid'] for file in files]
