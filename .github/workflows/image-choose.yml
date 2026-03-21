@@ -40,11 +40,6 @@ jobs: # 定义工作流中的作业
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Debug fonts
-        run: |
-          fc-list | grep -i noto | head -n 10
-
-
       - name: 执行商业图片选取
         env:
 
