@@ -9,7 +9,10 @@ on: # 触发条件
         description: 'quark目录'
         required: true
         default: 'GLD'
-        type: string
+        type: choice
+        options:
+          - GLD   # 黄金
+          - SIL   # 白银
 
 
 jobs: # 定义工作流中的作业
@@ -39,6 +42,11 @@ jobs: # 定义工作流中的作业
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Debug fonts
+        run: |
+          fc-list | grep -i noto | head -n 10
+
 
       - name: 执行商业图片选取
         env:
