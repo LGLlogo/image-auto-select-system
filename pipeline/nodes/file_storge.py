@@ -40,12 +40,13 @@ class FileStorgeNode(Node):
         task_id = ctx.get("task_id")
         _state = TaskManager.get_state(task_id)
         images = ctx.get('selected_images')
+        scores = ctx.get("scores")
         # 移动图片到目标目录
         moved_files = []
         for src_path in images:
             if os.path.exists(src_path):
-                # 获取文件名
-                filename = os.path.basename(src_path)
+                # 评分_文件名
+                filename = f"{round(scores[src_path]['total_score'], 3):.3f}_{os.path.basename(src_path)}"
                 dest_path = os.path.join(self.images_dir, filename)
                 try:
                     shutil.copy(src_path, dest_path)
