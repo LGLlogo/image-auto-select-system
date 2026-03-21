@@ -59,9 +59,11 @@ if __name__ == "__main__":
     args = parse_arguments()
     task_id = TaskManager().create_task()
     if args.folder:
-        run_pipeline_workflow(args.folder, task_id, None)
+        # 远程
+        run_pipeline_workflow("", args.folder, task_id, None)
     else:
-        run_pipeline_workflow("", task_id, None)
+        # 本地
+        run_pipeline_workflow("C:\\Users\\looge\\Desktop\\images\\1030_final", "", task_id, None)
 # if __name__ == "__main__":
 #     fastapi 服务
 #     uvicorn.run("backend.server:app", host="localhost", port=8000, reload=True)

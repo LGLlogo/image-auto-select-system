@@ -32,7 +32,7 @@ async def run_pipeline(req: RunRequest):
     """选择图片文件夹"""
     from backend.pipeline_runner import run_pipeline_workflow
     task_id = TaskManager().create_task()
-    loop = asyncio.get_running_loop()  # ✅ 正确
+    loop = asyncio.get_running_loop()  # 主线程传入loop
     asyncio.create_task(asyncio.to_thread(run_pipeline_workflow, req.image_dir, task_id, loop))
 
     return {"status": "started", "task_id": task_id}

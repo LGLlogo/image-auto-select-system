@@ -11,6 +11,7 @@ from pipeline.core.executor import DAGExecutor
 from pipeline.nodes.aesthetic_score import AestheticScoreNode
 from pipeline.nodes.content_safety_filter import ContentSafetyFilterNode
 from pipeline.nodes.deduplicate import DeduplicateNode
+from pipeline.nodes.download_images import DownloadImagesNode
 from pipeline.nodes.file_storge import FileStorgeNode
 
 from pipeline.nodes.load_images import LoadImagesNode
@@ -24,10 +25,14 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.set_num_threads(os.cpu_count())
 
 
-def build_dag(image_dir, task_id):
+def build_dag(image_dir, remote_image_dir, task_id):
     dag = DAG()
     num_workers = os.cpu_count()
-    dag.add_node(LoadImagesNode(image_dir=image_dir), task_id)
+    if remote_image_dir:
+         dag.add_node(DownloadImagesNode(folder_name=remote_image_dir, input_image_dir='input_images'), task_id)
+    else:
+        dag.add_node(LoadImagesNode(image_dir=image_dir), task_id)
+
     dag.add_node(ContentSafetyFilterNode(num_workers=num_workers,
                                          device=device), task_id)
     dag.add_node(QualityFilterNode(num_workers=num_workers), task_id)
@@ -48,7 +53,11 @@ def build_dag(image_dir, task_id):
         ), task_id)
     dag.add_node(FileStorgeNode(), task_id)
 
-    dag.add_edge("load_images", "content_safety_filter", task_id)
+    if remote_image_dir:
+        dag.add_edge("download_images", "load_images", task_id)
+    else:
+        dag.add_edge("load_images", "content_safety_filter", task_id)
+
     dag.add_edge("content_safety_filter", "quality_filter", task_id)
     dag.add_edge("quality_filter", "clip_embedding", task_id)
     dag.add_edge("clip_embedding", "deduplicate", task_id)
@@ -61,21 +70,24 @@ def build_dag(image_dir, task_id):
     return dag
 
 
-def run_pipeline_workflow(image_dir: str, task_id: str, loop):
+def run_pipeline_workflow(local_image_dir: str, remote_image_dir: str, task_id: str, loop):
     ctx = WorkflowContext()
     ctx.set("task_id", task_id)
 
     def on_update(data):
-        asyncio.run_coroutine_threadsafe(
-            ws_manager.broadcast(task_id, data),
-            loop
-        )
+        if loop:
+            asyncio.run_coroutine_threadsafe(
+                ws_manager.broadcast(task_id, data),
+                loop
+            )
+        else:
+            pass
 
     # 设置日志系统
     logger = TaskLogger(task_id, emitter=on_update)
     ctx.set("logger", logger)
 
-    dag = build_dag(image_dir, task_id)
+    dag = build_dag(local_image_dir, remote_image_dir, task_id)
     executor = DAGExecutor(dag,
                            max_workers=2,
                            on_update=on_update)
