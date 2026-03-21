@@ -12,7 +12,8 @@ class DownloadImagesNode(Node):
         self.input_image_dir = input_image_dir
 
     def run(self, ctx):
-        l = download_images_from_quark(folder_name=self.folder_name, desc_save_dir=self.input_image_dir)
+        logger = ctx.get("logger")
+        l = download_images_from_quark(folder_name=self.folder_name, desc_save_dir=self.input_image_dir, logger=logger)
         super().log(ctx, f"Download images: {l}")
         path = Path(self.input_image_dir)
         # 保存绝对路径

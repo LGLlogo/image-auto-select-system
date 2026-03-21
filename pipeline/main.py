@@ -64,6 +64,7 @@ if __name__ == "__main__":
     else:
         # 本地
         run_pipeline_workflow("C:\\Users\\looge\\Desktop\\images\\1030_final", "", task_id, None)
+
 # if __name__ == "__main__":
 #     fastapi 服务
 #     uvicorn.run("backend.server:app", host="localhost", port=8000, reload=True)
