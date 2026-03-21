@@ -9,10 +9,7 @@ on: # 触发条件
         description: 'quark目录'
         required: true
         default: 'GLD'
-        type: choice
-        options:
-          - GLD   # 黄金
-          - SIL   # 白银
+        type: string
 
 
 jobs: # 定义工作流中的作业
@@ -48,9 +45,8 @@ jobs: # 定义工作流中的作业
           fc-list | grep -i noto | head -n 10
 
 
-      - name: 执行商业图片选取
+      - name: 执行商业图片分析选取
         env:
-
           # 其他配置
           LOG_LEVEL: INFO
           DATA_DAYS: 60
@@ -62,7 +58,7 @@ jobs: # 定义工作流中的作业
           echo "=========================================="
           echo "时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
           echo "=========================================="
-#          获取quark目录
+          # 获取quark目录
           FOLDER="${{ github.event.inputs.folder_name }}"
           python pipeline/main.py --folder $FOLDER
 
