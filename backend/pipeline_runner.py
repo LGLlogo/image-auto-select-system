@@ -55,9 +55,8 @@ def build_dag(image_dir, remote_image_dir, task_id):
 
     if remote_image_dir:
         dag.add_edge("download_images", "load_images", task_id)
-    else:
-        dag.add_edge("load_images", "content_safety_filter", task_id)
 
+    dag.add_edge("load_images", "content_safety_filter", task_id)
     dag.add_edge("content_safety_filter", "quality_filter", task_id)
     dag.add_edge("quality_filter", "clip_embedding", task_id)
     dag.add_edge("clip_embedding", "deduplicate", task_id)
@@ -80,8 +79,6 @@ def run_pipeline_workflow(local_image_dir: str, remote_image_dir: str, task_id: 
                 ws_manager.broadcast(task_id, data),
                 loop
             )
-        else:
-            pass
 
     # 设置日志系统
     logger = TaskLogger(task_id, emitter=on_update)
