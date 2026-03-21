@@ -16,10 +16,10 @@ export default function LogPanel() {
     const sorted = [...logsTable].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 
     const columns = [
-        { title: "time", dataIndex: "timestamp", onCell: (v) => new Date(v) },
-        { title: "task_id", dataIndex: "task_id" },
+        { title: "task_id", dataIndex: "task_id", key: "task_id" },
         { title: "node", dataIndex: "node" },
         { title: "message", dataIndex: "message" },
+        { title: "time", dataIndex: "timestamp", onCell: (v) => new Date(v) },
     ]
 
     return <Table columns={columns} dataSource={sorted} />

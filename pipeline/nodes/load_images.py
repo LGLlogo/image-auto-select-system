@@ -24,9 +24,10 @@ class LoadImagesNode(Node):
 
         files = []
         images = []
-        for f in os.listdir(self.image_dir):
+        input_image_dir = self.image_dir if self.image_dir else ctx.get("input_image_dir")
+        for f in os.listdir(input_image_dir):
             if f.lower().endswith(("jpg", "jpeg", "png")):
-                file_path = os.path.join(self.image_dir, f)
+                file_path = os.path.join(input_image_dir, f)
                 # files.append(file_path)
                 img = cv2.imread(file_path)
                 if img is not None:

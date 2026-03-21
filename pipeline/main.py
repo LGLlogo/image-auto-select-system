@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import os.path
 
@@ -31,10 +32,36 @@ from pipeline.nodes.file_storge import FileStorgeNode
 #     executor = DAGExecutor(dag, max_workers=4)
 #     executor.run(ctx)
 
+def parse_arguments() -> argparse.Namespace:
+    """解析命令行参数"""
+    parser = argparse.ArgumentParser(
+        description='商业图库智能选取系统',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+示例:
+  python main.py                    # 正常运行
+  python main.py --symbol GLD       # 指定分析图片目录
+        ''')
 
-# if __name__ == "__main__":
-#     main()
+    parser.add_argument(
+        '--folder',
+        type=str,
+        help='指定分析图片目录'
+    )
+
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    uvicorn.run("backend.server:app", host="localhost", port=8000, reload=True)
+    # 直接调用
+    from backend.pipeline_runner import run_pipeline_workflow
+
+    args = parse_arguments()
+    task_id = TaskManager().create_task()
+    if args.folder:
+        run_pipeline_workflow(args.folder, task_id, None)
+    else:
+        run_pipeline_workflow("", task_id, None)
+# if __name__ == "__main__":
+#     fastapi 服务
+#     uvicorn.run("backend.server:app", host="localhost", port=8000, reload=True)
