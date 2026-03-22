@@ -33,8 +33,7 @@ jobs: # 定义工作流中的作业
 
       - name: Restore quark auth file
         run: |
-          pwd && ls -R
-          echo ${{ github.workspace }}
+          mkdir -p ${{ github.workspace }}/config
           echo "${{ secrets.COOKIES_BASE64 }}" | base64 -d > ${{ github.workspace }}/config/cookies.json
           echo "${{ secrets.LOGIN_RESULT_BASE64 }}" | base64 -d > ${{ github.workspace }}/config/login_result.json
           echo "${{ secrets.USER_INFO_BASE64 }}" | base64 -d > ${{ github.workspace }}/config/user_info.json
@@ -42,6 +41,8 @@ jobs: # 定义工作流中的作业
           chmod 600 ${{ github.workspace }}/config/cookies.json
           chmod 600 ${{ github.workspace }}/config/login_result.json
           chmod 600 ${{ github.workspace }}/config/user_info.json
+          
+          ls -R | grep json
 
       - name: Clear matplotlib cache
         run: |
