@@ -32,13 +32,7 @@ class DeduplicateNode(Node):
         embeddings = embeddings[selected_idx]
         images = [images[i] for i in selected_idx]
 
-        # scores 过滤
-        # scores 过滤
-        scores = ctx.get("scores").copy()
-        filtered_scores = dict(filter(lambda item: item[0] in selected, scores.items()))
-
         ctx.set("files", selected)
         ctx.set("embeddings", embeddings)
         ctx.set("images", images)
-        ctx.set("scores", filtered_scores)
         super().log(ctx, f"After deduplicate: {len(selected)}")

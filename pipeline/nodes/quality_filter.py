@@ -131,14 +131,14 @@ class QualityFilterNode(Node):
         keep_files = [files[x[0]] for x in keep_indices[:top_k]]
         images = [images[x[0]] for x in keep_indices[:top_k]]
 
-        scores = ctx.setdefault("scores", {})
+        # scores = ctx.setdefault("scores", {})
+        quality_scores = ctx.setdefault("quality_scores", {})
         # 质量评分 总评分计算要进行加权
         for i, f in enumerate(keep_files):
-            scores.setdefault(f, {})
-            scores[f]["quality_score"] = float(quality_score[i])
+            quality_scores[f] = float(quality_score[i])
 
         ctx.set("files", keep_files)
         ctx.set("images", images)
-        ctx.set("scores", scores)
+        ctx.set("quality_scores", quality_scores)
 
         super().log(ctx, f"After quality filter: {len(keep_files)}")

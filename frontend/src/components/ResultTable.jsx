@@ -1,5 +1,6 @@
-import { Table } from "antd"
+import { Table, Image } from "antd"
 import { useStore } from "../store"
+import { getImgPreview,getThumbPreview } from "../api"
 
 export default function ResultTable() {
 
@@ -8,10 +9,31 @@ export default function ResultTable() {
     const sorted = [...results].sort((a, b) => b.total_score - a.total_score)
 
     const formatScore = (v, n = 2) =>
-    v == null ? "-" : v.toFixed(n)
+        v == null ? "-" : v.toFixed(n)
 
     const columns = [
         { title: "File", dataIndex: "file" },
+        {
+            title: "Img",
+            dataIndex: "img",
+            render: (v, row, idx) => {
+                return (
+                        <Image
+                            key={idx}
+                            width={200}
+                            src={getThumbPreview(`${formatScore(row.total_score, 3)}_${row.file}`)}
+                            loading="lazy"
+                            preview={{
+                                src: getImgPreview(`${formatScore(row.total_score, 3)}_${row.file}`),
+                                visible: false,
+                                mask: '点击查看大图',
+                                onVisibleChange: (visible) => console.log(visible),
+                            }}
+                        />
+                )
+            }
+
+        },
         { title: "Final", dataIndex: "total_score", render: (v) => formatScore(v, 3) },
         { title: "Quality", dataIndex: "quality_score", render: (v) => formatScore(v, 3) },
         { title: "Commercial", dataIndex: "commercial_value", render: (v) => formatScore(v, 3) },
@@ -22,5 +44,7 @@ export default function ResultTable() {
         { title: "Negative", dataIndex: "negative_quality", render: (v) => formatScore(v, 3) },
     ]
 
-    return <Table columns={columns} dataSource={sorted} />
+    return <Image.PreviewGroup>
+        <Table columns={columns} dataSource={sorted} />
+    </Image.PreviewGroup>
 }

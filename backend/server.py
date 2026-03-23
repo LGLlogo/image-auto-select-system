@@ -1,10 +1,14 @@
 import json
 import os
 import sys
+
+import requests
 from fastapi import WebSocket, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import asyncio
+
+from starlette.responses import StreamingResponse
 
 from backend.WSManager import ws_manager
 from backend.state import TaskManager
@@ -33,9 +37,38 @@ async def run_pipeline(req: RunRequest):
     from backend.pipeline_runner import run_pipeline_workflow
     task_id = TaskManager().create_task()
     loop = asyncio.get_running_loop()  # 主线程传入loop
-    asyncio.create_task(asyncio.to_thread(run_pipeline_workflow, req.image_dir, task_id, loop))
+    # 模拟请求远程
+    local_image_dir = req.image_dir
+    remote_image_dir = ''
+    asyncio.create_task(asyncio.to_thread(run_pipeline_workflow, local_image_dir, remote_image_dir, task_id, loop))
 
     return {"status": "started", "task_id": task_id}
+
+
+@app.get("/image")
+def proxy_image(file_name: str):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    path = os.path.join(project_root, 'images', file_name)
+
+    def iter_file():
+        with open(path, "rb") as f:
+            yield from f
+
+    return StreamingResponse(iter_file(), media_type="image/jpg", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/thumb")
+def proxy_thumb(file_name: str):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    path = os.path.join(project_root, 'thumb', file_name)
+
+    def iter_file():
+        with open(path, "rb") as f:
+            yield from f
+
+    return StreamingResponse(iter_file(), media_type="image/jpg", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/dag_state")

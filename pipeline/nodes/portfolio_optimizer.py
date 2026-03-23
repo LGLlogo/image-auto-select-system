@@ -1,3 +1,5 @@
+import os.path
+
 import torch
 import numpy as np
 from sklearn.cluster import KMeans
@@ -127,7 +129,7 @@ class PortfolioOptimizerNode(Node):
 
         ctx.set("selected_images", selected_files)
         # state更新选片结果
-        update_results([{"file": f, **scores[f]} for f in selected_files], ctx.get("task_id"))
+        update_results([{"file": os.path.basename(f), **scores[f]} for f in selected_files], ctx.get("task_id"))
 
         for f in selected_files:
             super().log(ctx, f"{scores[f]['total_score']}, {f}")

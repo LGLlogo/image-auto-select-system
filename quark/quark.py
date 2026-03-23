@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 from quark_client import QuarkClient
@@ -11,10 +12,11 @@ def download_images_from_quark(folder_name: str, desc_save_dir: str):
         print(f"找到 {len(results['data']['list'])} 个文件")
         # print(results['data']['list'])
         folder_id = results['data']['list'][0]['fid']
-        files = client.list_files(folder_id, size=20)
+        files = client.list_files(folder_id, size=10)
         files = files['data']['list']
         # print(len(files))
-        file_ids = [file['fid'] for file in files]
+        input_images = os.listdir(desc_save_dir)
+        file_ids = [file['fid'] for file in files if file['file_name'] not in input_images]
         print(file_ids)
 
         def progress_callback(current, total, downloaded_bytes, total_bytes):

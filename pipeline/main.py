@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import os.path
 
+import requests
 import uvicorn
 
 from backend.logger import TaskLogger
@@ -63,8 +64,8 @@ if __name__ == "__main__":
         run_pipeline_workflow("", args.folder, task_id, None)
     else:
         # 本地
-        run_pipeline_workflow("C:\\Users\\looge\\Desktop\\images\\1030_final", "", task_id, None)
+        run_pipeline_workflow("C:\\Users\\looge\\Desktop\\images\\1031", "", task_id, None)
 
 # if __name__ == "__main__":
-#     fastapi 服务
+#     # fastapi 服务
 #     uvicorn.run("backend.server:app", host="localhost", port=8000, reload=True)

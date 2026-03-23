@@ -136,9 +136,9 @@ class VisionScoreNodeV3(Node):
         # ---------- 主流程 ----------
         files = ctx.get("files")
         embeddings = ctx.get("embeddings")
-        images = ctx.get("images")
+        # images = ctx.get("images")
 
-        scores = ctx.get("scores").copy()
+        # scores = ctx.get("scores").copy()
 
         # ---------- CLIP semantic scores ----------
         semantic_scores = {}
@@ -155,10 +155,9 @@ class VisionScoreNodeV3(Node):
         post = semantic_scores.get("post_processing", np.zeros(len(files)))
 
         # ---------- 保存结果 ----------
-
+        vision_scores = ctx.setdefault("vision_scores", {})
         for i, f in enumerate(files):
-            scores[f] = {
-                **scores[f],
+            vision_scores[f] = {
                 "commercial_value": float(commercial[i]),
                 "technical_quality": float(technical[i]),
                 "composition_quality": float(composition[i]),
@@ -167,6 +166,6 @@ class VisionScoreNodeV3(Node):
                 "negative_quality": float(negative[i])
             }
 
-        ctx.set("scores", scores)
+        ctx.set("vision_scores", vision_scores)
 
         super().log(ctx,"VisionScoreNode v3 finished")

@@ -36,8 +36,19 @@ class ScoreFusionNode(Node):
         # self.top_k = top_k
 
     def run(self, ctx):
-        scores = ctx.get('scores').copy()
-        files = list(scores.keys())
+        # scores = ctx.get('scores').copy()
+        files = ctx.get("files")
+        quality_scores = ctx.get("quality_scores")
+        aesthetic_scores = ctx.get("aesthetic_scores")
+        vision_scores = ctx.get("vision_scores")
+        scores = {}
+        for file in files:
+            scores[file] = {
+                'quality_score': quality_scores.get(file),
+                **vision_scores.get(file),
+                'aesthetic_score': aesthetic_scores.get(file),
+            }
+        # files = list(scores.keys())
         normalized = {}
         for factor in self.weights:
             values = [scores[f].get(factor, 0) for f in files]

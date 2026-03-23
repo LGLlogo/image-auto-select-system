@@ -38,8 +38,8 @@ export default function App() {
       {/* <h3>选片结果</h3> */}
 
 
-      <LogPanel />
       <ResultTable />
+      <LogPanel />
 
     </div>
   )
