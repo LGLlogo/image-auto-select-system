@@ -15,6 +15,7 @@ def download_images_from_quark(folder_name: str, desc_save_dir: str):
         files = client.list_files(folder_id, size=10)
         files = files['data']['list']
         # print(len(files))
+        Path(desc_save_dir).mkdir(exist_ok=True)
         input_images = os.listdir(desc_save_dir)
         file_ids = [file['fid'] for file in files if file['file_name'] not in input_images]
         print(file_ids)
