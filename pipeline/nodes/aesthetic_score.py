@@ -22,6 +22,7 @@ class AestheticScoreNode(Node):
         aesthetic_scores = self.aesthetic_score_batch(embeddings)
         # scores = ctx.get("scores").copy()
         files = ctx.get("files")
+        super().log(ctx, f"Aesthetic scoring start: {len(files)} | {len(aesthetic_scores)}")
         aesthetic_scores_json = ctx.setdefault("aesthetic_scores", {})
         for path, score in zip(files, aesthetic_scores):
             # scores[path] = {
