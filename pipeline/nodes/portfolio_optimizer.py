@@ -9,7 +9,6 @@ from pipeline.core.node import Node
 
 
 class PortfolioOptimizerNode(Node):
-    name = "portfolio_optimizer"
 
     def __init__(
             self,
@@ -19,7 +18,7 @@ class PortfolioOptimizerNode(Node):
             lambda_penalty=0.7,
             device="cpu",
     ):
-
+        super().__init__(name="portfolio_optimizer")
         self.top_k = top_k
         self.cluster_k = cluster_k
         self.cluster_top_n = cluster_top_n
@@ -97,6 +96,8 @@ class PortfolioOptimizerNode(Node):
         candidates = set(range(len(candidate_idx)))
         candidates.remove(first)
 
+        done = 0
+        total = min(len(candidates), self.top_k)
         while len(selected) < self.top_k and candidates:
 
             best_idx = None
@@ -121,6 +122,10 @@ class PortfolioOptimizerNode(Node):
 
             selected.append(best_idx)
             candidates.remove(best_idx)
+            done += 1
+            self._emit(
+                self.process.callback(done, total)
+            )
 
         # ---------- map back ----------
         final_idx = [candidate_idx[i] for i in selected]

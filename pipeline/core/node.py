@@ -2,17 +2,24 @@
 import logging
 import time
 
+from backend.progress import DownloadProgress
+
 
 class Node:
-    name = 'node'
+
+    def __init__(self, name='node'):
+        self.name = name or self.__class__.__name__
+        self._emit = None
+        self.progress = DownloadProgress(node_id=self.name)
 
     def run(self, ctx):
         raise NotImplementedError
 
-    def execute(self, ctx):
+    def execute(self, ctx, _emit):
         """
         统一执行入口
         """
+        self._emit = _emit
         start = time.time()
         try:
             self.log(ctx, f"[NODE START] {self.name}")

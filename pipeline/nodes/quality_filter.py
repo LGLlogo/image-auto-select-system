@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import cv2
 import numpy as np
@@ -19,8 +19,9 @@ def normalize(scores):
     return (arr - min_v) / (max_v - min_v)
 
 
-def compute_metrics(img):
+def compute_metrics(idx_img):
     """图片质量指标"""
+    idx, img = idx_img
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # 1 sharpness 锐度
@@ -50,7 +51,7 @@ def compute_metrics(img):
     h, w = img.shape[:2]
     resolution = min(h, w)
 
-    return (
+    return idx, (
         sharpness,
         exposure,
         contrast,
@@ -63,9 +64,9 @@ def compute_metrics(img):
 
 
 class QualityFilterNode(Node):
-    name = 'quality_filter'
 
     def __init__(self, num_workers=16):
+        super().__init__(name="quality_filter")
         self.num_workers = num_workers
         # 清晰度
         self.min_sharpness = 60
@@ -86,10 +87,24 @@ class QualityFilterNode(Node):
 
         tasks = []
         for idx, img in enumerate(images):
-            tasks.append(img)
+            tasks.append((idx, img))
         # ---------- 多线程读取图片 ----------
         with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            metrics = list(executor.map(compute_metrics, tasks))
+            # metrics = list(executor.map(compute_metrics, tasks))
+            futures = {
+                executor.submit(compute_metrics, task): i
+                for i, task in enumerate(tasks)
+            }
+            metrics = [None] * len(tasks)
+            done = 0
+            total = len(tasks)
+            for future in as_completed(futures):
+                idx, res = future.result()
+                metrics[idx] = res
+                done += 1
+                self._emit(
+                    self.process.callback(done, total)
+                )
 
         metrics = np.array(metrics)
         sharpness = metrics[:, 0]

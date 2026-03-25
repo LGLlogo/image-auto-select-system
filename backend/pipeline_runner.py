@@ -29,7 +29,8 @@ def build_dag(image_dir, remote_image_dir, task_id):
     dag = DAG()
     num_workers = os.cpu_count()
     if remote_image_dir:
-        dag.add_node(DownloadImagesNode(folder_name=remote_image_dir, input_image_dir='input_images'), task_id)
+        dag.add_node(DownloadImagesNode(folder_name=remote_image_dir,
+                                        input_image_dir='input_images'), task_id)
 
     dag.add_node(LoadImagesNode(image_dir=image_dir), task_id)
     dag.add_node(ContentSafetyFilterNode(num_workers=num_workers,

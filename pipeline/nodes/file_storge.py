@@ -23,18 +23,29 @@ class FileStorgeNode(Node):
     文件保存
     """
 
-    name = "file_storge"
-
     def __init__(self):
         """初始化目录管理器"""
+        super().__init__(name="file_storge")
         self.images_dir = "images"
         self.logs_dir = "logs"
         self.thumb_dir = "thumb"
         self.data_dir = "data"
+        self.node_progress = {
+            self.images_dir: 0,
+            self.logs_dir: 0,
+            self.thumb_dir: 0,
+            self.data_dir: 0
+        }
+        self.file_storge_weight = {
+            self.images_dir: 0.35,
+            self.logs_dir: 0.3,
+            self.thumb_dir: 0.15,
+            self.data_dir: 0.2
+        }
 
     def _create_directories(self, ctx):
         """创建必要的目录"""
-        directories = [self.images_dir, self.logs_dir, self.thumb_dir, self.data_dir]
+        directories = self.file_storge_weight.keys()
         for directory in directories:
             try:
                 Path(directory).mkdir(exist_ok=True)
@@ -48,6 +59,18 @@ class FileStorgeNode(Node):
         self.zip_logs(ctx)
         self.data_storge(ctx)
 
+    def emit_total_progress(self, total):
+        sub_total = 0
+
+        for node, percent in self.node_progress.items():
+            weight = self.file_storge_weight.get(node, 1)
+            sub_total += percent * weight
+
+        self._emit(
+            # 权重 * percent
+            self.process.callback(sub_total, total)
+        )
+
     def zip_images(self, ctx):
         """压缩图片"""
         task_id = ctx.get("task_id")
@@ -56,6 +79,7 @@ class FileStorgeNode(Node):
         scores = ctx.get("scores")
         # 移动图片到目标目录
         moved_files = []
+        total = len(images)
         for src_path in images:
             if os.path.exists(src_path):
                 # 评分_文件名
@@ -67,6 +91,8 @@ class FileStorgeNode(Node):
                     # 缩略图
                     make_thumb(src_path, dest_thumb_path)
                     moved_files.append(dest_path)
+                    self.node_progress[self.thumb_dir] += 1
+                    self.emit_total_progress(total=total)
                     super().info(ctx, f"已复制: {src_path} -> {dest_path}")
                 except Exception as e:
                     super().error(ctx, f"移动文件 {src_path} 时出错: {e}")
@@ -75,12 +101,15 @@ class FileStorgeNode(Node):
 
         # 创建ZIP文件
         zip_filepath = f"images_{task_id}.zip"
+        total = len(moved_files)
         try:
             with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_STORED, compresslevel=1) as zipf:
                 for file_path in moved_files:
                     # 将文件添加到ZIP中，只保留文件名（不包含目录结构）
                     arcname = os.path.basename(file_path)
                     zipf.write(file_path, arcname)
+                    self.node_progress[self.images_dir] += 1
+                    self.emit_total_progress(total=total)
             super().info(ctx, f"最终选图压缩文件已创建: {zip_filepath}")
             return zip_filepath
         except Exception as e:
@@ -106,11 +135,14 @@ class FileStorgeNode(Node):
             return
 
         # 创建ZIP文件并添加日志文件
+        total = len(log_files)
         try:
             with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_STORED, compresslevel=1) as zipf:
                 for log_file in log_files:
                     # 添加文件到ZIP，保持目录结构
                     zipf.write(log_file, log_file.name)
+                    self.node_progress[self.logs_dir] += 1
+                    self.emit_total_progress(total=total)
                     super().info(ctx, f"已添加日志文件: {log_file.name}")
 
             super().info(ctx, f"日志文件已成功压缩到: {zip_filename}")
@@ -133,6 +165,8 @@ class FileStorgeNode(Node):
             filepath = os.path.join(self.data_dir, f"state_{task_id}.json")
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(state_data, f, ensure_ascii=False, indent=2)
+                self.node_progress[self.data_dir] += 1
+                self.emit_total_progress(total=1)
             super().info(ctx, f"分析数据已保存: {filepath} ")
         except Exception as e:
             super().error(ctx, f"保存状态失败: {e}")

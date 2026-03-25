@@ -1,5 +1,5 @@
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import cv2
 import easyocr
@@ -11,13 +11,12 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 
 
 class ContentSafetyFilterNode(Node):
-    name = "content_safety_filter"
 
     def __init__(self,
                  num_workers=None,
                  batch_size=16,
                  device="cpu"):
-
+        super().__init__(name="content_safety_filter")
         self.device = device
 
         self.batch_size = batch_size
@@ -122,11 +121,26 @@ class ContentSafetyFilterNode(Node):
 
         keep_indices = []
         with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            results = executor.map(self.process_extra_checks, tasks)
+            futures = {
+                executor.submit(self.process_extra_checks, task): i
+                for i, task in enumerate(tasks)
+            }
 
-            for idx, keep in results:
+            total = len(tasks)
+            done = 0
+            for future in as_completed(futures):
+                idx, keep = future.result()
                 if keep:
                     keep_indices.append(idx)
+                done += 1
+                self._emit(
+                    self.process.callback(done, total)
+                )
+            # results = executor.map(self.process_extra_checks, tasks)
+
+            # for idx, keep in results:
+            #     if keep:
+            #         keep_indices.append(idx)
 
         keep_indices.sort()
         keep_files = [files[i] for i in keep_indices]

@@ -5,10 +5,9 @@ from pipeline.core.node import Node
 
 
 class VisionScoreNodeV3(Node):
-    name = "vision_score"
 
     def __init__(self, num_workers=8, device="cpu"):
-
+        super().__init__(name="vision_score")
         self.device = device
         self.num_workers = num_workers
         self.model, self.preprocess = clip.load(
@@ -119,7 +118,6 @@ class VisionScoreNodeV3(Node):
     def encode_prompts(self):
 
         prompt_embeddings = {}
-
         for key, texts in self.prompts.items():
             tokens = clip.tokenize(texts).to(self.device)
 
@@ -140,12 +138,18 @@ class VisionScoreNodeV3(Node):
 
         # scores = ctx.get("scores").copy()
 
+        done = 0
+        total = len(self.prompt_embeddings.items())
         # ---------- CLIP semantic scores ----------
         semantic_scores = {}
         for key, prompt_emb in self.prompt_embeddings.items():
             sim = embeddings @ prompt_emb.T
             score = sim.mean(axis=1)
             semantic_scores[key] = score
+            done += 1
+            self._emit(
+                self.process.callback(done, total)
+            )
 
         commercial = semantic_scores.get("commercial_value", np.zeros(len(files)))
         composition = semantic_scores.get("composition_quality", np.zeros(len(files)))

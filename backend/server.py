@@ -38,8 +38,8 @@ async def run_pipeline(req: RunRequest):
     task_id = TaskManager().create_task()
     loop = asyncio.get_running_loop()  # 主线程传入loop
     # 模拟请求远程
-    local_image_dir = req.image_dir
-    remote_image_dir = ''
+    local_image_dir = ''
+    remote_image_dir = req.image_dir
     asyncio.create_task(asyncio.to_thread(run_pipeline_workflow, local_image_dir, remote_image_dir, task_id, loop))
 
     return {"status": "started", "task_id": task_id}

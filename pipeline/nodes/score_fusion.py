@@ -20,9 +20,9 @@ def normalize(scores):
 
 # 总评分计算
 class ScoreFusionNode(Node):
-    name = 'score_fusion'
 
     def __init__(self, top_k=10):
+        super().__init__(name='score_fusion')
         self.weights = {
             "aesthetic_score": 0.30,  # 美学评分
             "commercial_value": 0.25,  # 商业价值
@@ -79,6 +79,9 @@ class ScoreFusionNode(Node):
 
             penalty_score = self.negative_penalty * negative_scores[i]
             scores[f]["total_score"] = float(np.clip(base_score - penalty_score, 0, 1))
+            self._emit(
+                self.process.callback(i + 1, len(files))
+            )
 
         ctx.set("scores", scores)
         # 排序

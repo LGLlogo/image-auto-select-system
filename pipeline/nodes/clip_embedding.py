@@ -18,12 +18,12 @@ def read_image(file):
 
 # GPU批量
 class CLIPEmbeddingNode(Node):
-    name = "clip_embedding"
 
     def __init__(self,
                  device="cpu",
                  batch_size=32,
                  num_workers=8):
+        super().__init__(name="clip_embedding")
         self.device = device
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -34,17 +34,31 @@ class CLIPEmbeddingNode(Node):
 
     def compute_embeddings(self, valid_images):
         embeddings = []
+        total = len(valid_images)
+        processed = 0
 
         for i in tqdm(range(0, len(valid_images), self.batch_size)):
             batch_imgs = valid_images[i:i + self.batch_size]
+            mid = i + len(batch_imgs) * 0.5
+            end = i + len(batch_imgs)
+
             inputs = torch.stack(
                 [self.preprocess(img) for img in batch_imgs]
             ).to(self.device)
+
+            self._emit(
+                self.process.callback(mid, total)
+            )
+
             with torch.no_grad():
                 emb = self.model.encode_image(inputs)
 
             emb = emb / emb.norm(dim=-1, keepdim=True)
             embeddings.append(emb.cpu().numpy())
+
+            self._emit(
+                self.process.callback(end, total)
+            )
 
         # 垂直拼接
         embeddings = np.vstack(embeddings)

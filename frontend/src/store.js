@@ -5,6 +5,7 @@ export const useStore = create(set => ({
     results: [],
     logs: {},
     dag: { nodes: [], edges: [] },
+    node_progress: {},
 
     setState: (data) => set({
         nodes: data.nodes ?? {},
@@ -21,5 +22,16 @@ export const useStore = create(set => ({
                     log
                 ]
             }
-        }))
+        })),
+
+    setProgress: (progress) => set(state => ({
+        node_progress: {
+            ...state.node_progress,
+            [progress.node_id]: {
+                node_id: progress.node_id ?? "",
+                current: progress.current ?? 0,
+                total: progress.total ?? 0,
+                percent: progress.percent ?? 0,
+            }}
+        })),
 }))

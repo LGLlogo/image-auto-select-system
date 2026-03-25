@@ -27,7 +27,7 @@ export default function ResultTable() {
                                 src: getImgPreview(`${formatScore(row.total_score, 3)}_${row.file}`),
                                 visible: false,
                                 mask: '点击查看大图',
-                                onVisibleChange: (visible) => console.log(visible),
+                                onOpenChange: (visible) => console.log(visible),
                             }}
                         />
                 )

@@ -4,18 +4,34 @@ from pipeline.models.aesthetic_model import load_aesthetic_model
 
 
 class AestheticScoreNode(Node):
-    name = "aesthetic_score"
 
-    def __init__(self):
+    def __init__(self, batch_size=32):
+        super().__init__(name="aesthetic_score")
         self.model = load_aesthetic_model()
+        self.batch_size = batch_size
 
     def aesthetic_score_batch(self, embeddings):
-        emb = torch.tensor(embeddings).float()
+        total = len(embeddings)
+        results = []
+        processed = 0
+        for i in range(0, total, self.batch_size):
+            batch = embeddings[i:i + self.batch_size]
+            emb = torch.tensor(batch).float()
+            mid = i + len(batch) * 0.5
+            end = i + len(batch)
+            self._emit(
+                self.process.callback(mid, total)
+            )
+            with torch.no_grad():
+                scores = self.model(emb).squeeze()
 
-        with torch.no_grad():
-            scores = self.model(emb).squeeze()
+            scores = scores.cpu().numpy()
+            results.extend(scores)
+            self._emit(
+                self.process.callback(end, total)
+            )
 
-        return scores.numpy()
+        return results
 
     def run(self, ctx):
         embeddings = ctx.get("embeddings")

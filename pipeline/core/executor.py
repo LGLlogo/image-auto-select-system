@@ -80,8 +80,7 @@ class DAGExecutor:
                 "type": "node_update",
                 **_state.__dict__
             })
-
-            result = node.execute(ctx)  # ✅ 同步执行
+            result = node.execute(ctx, self._emit)  # ✅ 同步执行
             update_node(node_id, "done", ctx)
             _state = TaskManager.get_state(ctx.get("task_id"))
 
