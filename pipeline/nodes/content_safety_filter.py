@@ -134,7 +134,7 @@ class ContentSafetyFilterNode(Node):
                     keep_indices.append(idx)
                 done += 1
                 self._emit(
-                    self.process.callback(done, total)
+                    self.progress.callback(done, total)
                 )
             # results = executor.map(self.process_extra_checks, tasks)
 

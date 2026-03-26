@@ -74,6 +74,7 @@ def update_node(node_id: str, status: str, ctx: WorkflowContext):
         "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     }
     _state.add_node(node_id, data)
+    return _state
 
 
 def add_dag(dag_type, dag_json, task_id):

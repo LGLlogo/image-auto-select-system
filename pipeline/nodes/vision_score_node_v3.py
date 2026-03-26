@@ -145,10 +145,11 @@ class VisionScoreNodeV3(Node):
         for key, prompt_emb in self.prompt_embeddings.items():
             sim = embeddings @ prompt_emb.T
             score = sim.mean(axis=1)
-            semantic_scores[key] = score
+            # [-1, 1] → [0, 1]
+            semantic_scores[key] = (score + 1) / 2
             done += 1
             self._emit(
-                self.process.callback(done, total)
+                self.progress.callback(done, total)
             )
 
         commercial = semantic_scores.get("commercial_value", np.zeros(len(files)))

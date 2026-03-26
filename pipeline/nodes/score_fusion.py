@@ -3,19 +3,24 @@ import numpy as np
 from pipeline.core.node import Node
 
 
-def normalize(scores):
+def normalize(scores, method="minmax"):
     """数据分布归一化"""
     arr = np.array(scores)
+    if method == "minmax":
+        min_v = arr.min()
+        max_v = arr.max()
+        if max_v == min_v:
+            return [0.5] * len(scores)
 
-    min_v = arr.min()
-    max_v = arr.max()
+        return (arr - min_v) / (max_v - min_v + 1e-6)
 
-    if max_v == min_v:
-        return [0.5] * len(scores)
+    elif method == "zscore":
+        x = (arr - arr.mean()) / (arr.std() + 1e-6)
+        return 1 / (1 + np.exp(-x))
 
-    norm = (arr - min_v) / (max_v - min_v)
-    # 归一化到 0.1-1 避免最差图片评分全为0
-    return 0.1 + 0.9 * norm
+    elif method == "rank":
+        order = arr.argsort().argsort()
+        return order / len(arr)
 
 
 # 总评分计算
@@ -52,8 +57,10 @@ class ScoreFusionNode(Node):
         normalized = {}
         for factor in self.weights:
             values = [scores[f].get(factor, 0) for f in files]
-            # 统一标准化
-            normalized[factor] = normalize(values)
+            # 统一标准化 clip分数使用rank
+            normalized[factor] = normalize(values, method="rank")
+            for i, f in enumerate(files):
+                scores[f][factor] = normalized[factor][i]
 
         matrix = []
 
@@ -64,7 +71,7 @@ class ScoreFusionNode(Node):
         negative_scores = [scores[f].get("negative_quality", 0) for f in files]
         negative_scores = normalize(negative_scores)
 
-        # quality_filter 质量评分
+        # quality_filter 质量评分 quality_score已经normalize
         quality_scores = [scores[f].get("quality_score", 0) for f in files]
 
         # 向量化计算加权
@@ -80,7 +87,7 @@ class ScoreFusionNode(Node):
             penalty_score = self.negative_penalty * negative_scores[i]
             scores[f]["total_score"] = float(np.clip(base_score - penalty_score, 0, 1))
             self._emit(
-                self.process.callback(i + 1, len(files))
+                self.progress.callback(i + 1, len(files))
             )
 
         ctx.set("scores", scores)

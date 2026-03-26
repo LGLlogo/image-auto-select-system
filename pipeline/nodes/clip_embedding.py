@@ -47,7 +47,7 @@ class CLIPEmbeddingNode(Node):
             ).to(self.device)
 
             self._emit(
-                self.process.callback(mid, total)
+                self.progress.callback(mid, total)
             )
 
             with torch.no_grad():
@@ -57,7 +57,7 @@ class CLIPEmbeddingNode(Node):
             embeddings.append(emb.cpu().numpy())
 
             self._emit(
-                self.process.callback(end, total)
+                self.progress.callback(end, total)
             )
 
         # 垂直拼接

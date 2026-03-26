@@ -68,7 +68,7 @@ class FileStorgeNode(Node):
 
         self._emit(
             # 权重 * percent
-            self.process.callback(sub_total, total)
+            self.progress.callback(sub_total, total)
         )
 
     def zip_images(self, ctx):

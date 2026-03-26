@@ -124,7 +124,7 @@ class PortfolioOptimizerNode(Node):
             candidates.remove(best_idx)
             done += 1
             self._emit(
-                self.process.callback(done, total)
+                self.progress.callback(done, total)
             )
 
         # ---------- map back ----------

@@ -24,9 +24,7 @@ export default function NodePanel({ selectedNode }) {
             <p>状态: {target_node?.status}</p>
             <p>当前进度: {getRoundedPercent(node_progress?.percent)}%</p>
             <Progress percent={getRoundedPercent(node_progress?.percent)} status="active" type="circle" />
-
             <p>图片数: {target_node?.image_count}</p>
-
             <pre style={{ maxHeight: 300, overflow: "auto" }}>
                 {JSON.stringify(target_node?.scores, null, 2)}
             </pre>

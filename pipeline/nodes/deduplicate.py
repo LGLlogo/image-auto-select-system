@@ -31,7 +31,7 @@ class DeduplicateNode(Node):
                 selected_idx.append(i)
 
             self._emit(
-               self.process.callback(i + 1, total)
+               self.progress.callback(i + 1, total)
             )
 
         # 同步更新embeddings和images

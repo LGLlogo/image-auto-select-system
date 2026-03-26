@@ -16,7 +16,7 @@ def normalize(scores):
     if max_v - min_v < 1e-6:
         return np.ones_like(scores) * 0.5
 
-    return (arr - min_v) / (max_v - min_v)
+    return (arr - min_v) / (max_v - min_v + 1e-6)
 
 
 def compute_metrics(idx_img):
@@ -103,7 +103,7 @@ class QualityFilterNode(Node):
                 metrics[idx] = res
                 done += 1
                 self._emit(
-                    self.process.callback(done, total)
+                    self.progress.callback(done, total)
                 )
 
         metrics = np.array(metrics)

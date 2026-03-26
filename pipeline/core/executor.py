@@ -73,16 +73,14 @@ class DAGExecutor:
         """执行单节点"""
         node = self.nodes[node_id]
         try:
-            update_node(node_id, "running", ctx)
-            _state = TaskManager.get_state(ctx.get("task_id"))
+            _state = update_node(node_id, "running", ctx)
 
             self._emit({
                 "type": "node_update",
                 **_state.__dict__
             })
             result = node.execute(ctx, self._emit)  # ✅ 同步执行
-            update_node(node_id, "done", ctx)
-            _state = TaskManager.get_state(ctx.get("task_id"))
+            _state = update_node(node_id, "done", ctx)
 
             self._emit({
                 "type": "node_done",
@@ -92,8 +90,7 @@ class DAGExecutor:
             return node_id, True
 
         except Exception as e:
-            update_node(node_id, "fail", ctx)
-            _state = TaskManager.get_state(ctx.get("task_id"))
+            _state = update_node(node_id, "fail", ctx)
             self._emit({
                 "type": "node_error",
                 **_state.__dict__

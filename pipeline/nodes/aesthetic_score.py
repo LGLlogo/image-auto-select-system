@@ -16,19 +16,19 @@ class AestheticScoreNode(Node):
         processed = 0
         for i in range(0, total, self.batch_size):
             batch = embeddings[i:i + self.batch_size]
-            emb = torch.tensor(batch).float()
             mid = i + len(batch) * 0.5
             end = i + len(batch)
             self._emit(
-                self.process.callback(mid, total)
+                self.progress.callback(mid, total)
             )
+            emb = torch.tensor(batch).float()
             with torch.no_grad():
                 scores = self.model(emb).squeeze()
 
             scores = scores.cpu().numpy()
             results.extend(scores)
             self._emit(
-                self.process.callback(end, total)
+                self.progress.callback(end, total)
             )
 
         return results

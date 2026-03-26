@@ -36,7 +36,7 @@ class LoadImagesNode(Node):
                     files.append(file_path)
                     images.append(img)
                     self._emit(
-                        self.process.callback(i + 1, total)
+                        self.progress.callback(i + 1, total)
                     )
 
         # ---------- 多线程读取图片 ----------

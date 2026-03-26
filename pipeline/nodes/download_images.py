@@ -29,7 +29,7 @@ class DownloadImagesNode(Node):
 
             def progress_callback(current, total, downloaded_bytes, total_bytes):
                 self._emit(
-                    self.process.callback(current, total, downloaded_bytes, total_bytes)
+                    self.progress.callback(current, total, downloaded_bytes, total_bytes)
                 )
                 # bar_length = int((abs(downloaded_bytes) / total_bytes) * 10)
                 # bar_str = "█" * bar_length + "-" * (10 - bar_length)
@@ -47,5 +47,5 @@ class DownloadImagesNode(Node):
         # 保存绝对路径
         ctx.set("input_image_dir", path.absolute())
         self._emit(
-            self.process.callback(1, 1)
+            self.progress.callback(1, 1)
         )
