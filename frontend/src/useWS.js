@@ -26,5 +26,5 @@ export default function useWS(taskId) {
             // return () => ws.close()
         }
 
-    }, [setState, addLog, taskId])
+    }, [setState, addLog, setProgress, taskId])
 }

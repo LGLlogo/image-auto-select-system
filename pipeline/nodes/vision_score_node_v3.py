@@ -173,4 +173,4 @@ class VisionScoreNodeV3(Node):
 
         ctx.set("vision_scores", vision_scores)
 
-        super().log(ctx,"VisionScoreNode v3 finished")
+        super().log(ctx, "VisionScoreNode v3 finished")

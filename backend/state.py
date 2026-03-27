@@ -71,6 +71,7 @@ def update_node(node_id: str, status: str, ctx: WorkflowContext):
         "image_count": len(ctx.get("files", [])),
         # 返回前 dict转list
         "scores": [{"path": f, **v} for f, v in ctx.get("scores", {}).items()],
+        "output_scores": [{"path": f, **v} for f, v in ctx.get("output_scores", {}).items()],
         "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     }
     _state.add_node(node_id, data)
