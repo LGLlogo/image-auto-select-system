@@ -15,6 +15,7 @@ from pipeline.nodes.download_images import DownloadImagesNode
 from pipeline.nodes.file_storge import FileStorgeNode
 
 from pipeline.nodes.load_images import LoadImagesNode
+from pipeline.nodes.load_images_zip import LoadImagesZipNode
 from pipeline.nodes.quality_filter import QualityFilterNode
 from pipeline.nodes.clip_embedding import CLIPEmbeddingNode
 from pipeline.nodes.portfolio_optimizer import PortfolioOptimizerNode
@@ -32,7 +33,9 @@ def build_dag(image_dir, remote_image_dir, task_id):
         dag.add_node(DownloadImagesNode(folder_name=remote_image_dir,
                                         input_image_dir='input_images'), task_id)
 
-    dag.add_node(LoadImagesNode(image_dir=image_dir), task_id)
+    dag.add_node(LoadImagesZipNode(image_zip_path=image_dir), task_id)
+    # dag.add_node(LoadImagesNode(image_dir=image_dir), task_id)
+
     dag.add_node(ContentSafetyFilterNode(num_workers=num_workers,
                                          device=device), task_id)
     dag.add_node(QualityFilterNode(num_workers=num_workers), task_id)

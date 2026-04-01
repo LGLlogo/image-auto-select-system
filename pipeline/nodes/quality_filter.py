@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from operator import itemgetter
 
 import cv2
 import numpy as np
@@ -81,8 +82,9 @@ class QualityFilterNode(Node):
         self.min_resolution = 1200
 
     def run(self, ctx):
-        files = ctx.get("files")
-        images = ctx.get("images")
+        records = ctx.get("records")
+        files = [record.name for record in records]
+        images = [record.image for record in records]
         keep_indices = []
 
         tasks = []
@@ -144,7 +146,6 @@ class QualityFilterNode(Node):
         keep_indices.sort(key=lambda x: x[1], reverse=True)
         top_k = int(len(keep_indices) * 0.8)
         keep_files = [files[x[0]] for x in keep_indices[:top_k]]
-        images = [images[x[0]] for x in keep_indices[:top_k]]
 
         # scores = ctx.setdefault("scores", {})
         quality_scores = ctx.setdefault("quality_scores", {})
@@ -152,8 +153,9 @@ class QualityFilterNode(Node):
         for i, f in enumerate(keep_files):
             quality_scores[f] = float(quality_score[i])
 
-        ctx.set("files", keep_files)
-        ctx.set("images", images)
+        getter = itemgetter(*[x[0] for x in keep_indices[:top_k]])
+        result = getter(records)
+        ctx.set("records", result)
         ctx.set("quality_scores", quality_scores)
 
         super().log(ctx, f"After quality filter: {len(keep_files)}")

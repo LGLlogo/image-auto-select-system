@@ -132,11 +132,9 @@ class VisionScoreNodeV3(Node):
 
     def run(self, ctx):
         # ---------- 主流程 ----------
-        files = ctx.get("files")
-        embeddings = ctx.get("embeddings")
-        # images = ctx.get("images")
-
-        # scores = ctx.get("scores").copy()
+        records = ctx.get("records")
+        files = [record.name for record in records]
+        embeddings = [record.clip for record in records]
 
         done = 0
         total = len(self.prompt_embeddings.items())

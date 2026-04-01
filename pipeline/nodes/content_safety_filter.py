@@ -1,5 +1,6 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from operator import itemgetter
 
 import cv2
 import easyocr
@@ -90,8 +91,9 @@ class ContentSafetyFilterNode(Node):
 
     def run(self, ctx):
 
-        files = ctx.get("files")
-        # embeddings = ctx.get("embeddings")
+        records = ctx.get("records")
+        files = [record.name for record in records]
+        images = [record.image for record in records]
 
         removed = {
             "face": 0,
@@ -100,7 +102,6 @@ class ContentSafetyFilterNode(Node):
             "qr": 0
         }
 
-        images = ctx.get("images")
         valid_indices = []
         for i, img in enumerate(images):
             valid_indices.append(i)
@@ -145,12 +146,12 @@ class ContentSafetyFilterNode(Node):
         keep_indices.sort()
         keep_files = [files[i] for i in keep_indices]
         # embeddings = embeddings[keep_indices]
-        images = [images[i] for i in keep_indices]
+        # images = [images[i] for i in keep_indices]
 
         super().log(ctx, "ContentSafetyFilter v3 result:")
         super().log(ctx, f"kept: {len(keep_files)}")
         super().log(ctx, f"removed: {removed}")
 
-        ctx.set("files", keep_files)
-        # ctx.set("embeddings", embeddings)
-        ctx.set("images", images)
+        getter = itemgetter(*keep_indices)
+        result = getter(records)
+        ctx.set("records", result)

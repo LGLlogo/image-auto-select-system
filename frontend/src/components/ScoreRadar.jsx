@@ -1,5 +1,5 @@
 import {
-  Radar, RadarChart, PolarGrid,
+  Radar, RadarChart, PolarGrid, Tooltip, Legend,
   PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer
 } from "recharts"
 
@@ -28,6 +28,8 @@ export default function ScoreRadar({ scores }) {
           fill="#8884d8"
           fillOpacity={0.6}
         />
+        {/* 核心：鼠标悬停提示框 */}
+        <Tooltip />
       </RadarChart>
     </ResponsiveContainer>
   )

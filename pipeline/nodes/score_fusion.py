@@ -91,7 +91,8 @@ class ScoreFusionNode(Node):
 
     def run(self, ctx):
         # scores = ctx.get('scores').copy()
-        files = ctx.get("files")
+        records = ctx.get("records")
+        files = [record.name for record in records]
         quality_scores = ctx.get("quality_scores")
         aesthetic_scores = ctx.get("aesthetic_scores")
         vision_scores = ctx.get("vision_scores")

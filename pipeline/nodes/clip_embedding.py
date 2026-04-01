@@ -1,5 +1,8 @@
+from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
+from operator import itemgetter
 
+import cv2
 import torch
 import clip
 import numpy as np
@@ -67,21 +70,29 @@ class CLIPEmbeddingNode(Node):
         return embeddings
 
     def run(self, ctx):
-        files = ctx.get("files")
+        records = ctx.get("records")
+        # files = [record.name for record in records]
+        cv2_images = [record.image for record in records]
         # ---------- 多线程读取图片 ----------
-        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            images = list(executor.map(read_image, files))
+        # with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+        #     images = list(executor.map(read_image, files))
+        images = [
+            Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)).convert("RGB")
+            for img in cv2_images
+        ]
 
         valid_files = []
         valid_images = []
 
-        for f, img in zip(files, images):
+        for i, img in enumerate(images):
             if img is not None:
-                valid_files.append(f)
+                valid_files.append(i)
                 valid_images.append(img)
 
         embeddings = self.compute_embeddings(valid_images)
-        ctx.set("files", valid_files)
-        ctx.set("embeddings", embeddings)
+        getter = itemgetter(*valid_files)
+        result = getter(records)
+        ImageRecord = namedtuple('image_record', ['name', 'image', 'clip'])
+        image_records = [ImageRecord._make(u + (emb,)) for u, emb in zip(result, embeddings)]
+        ctx.set("records", image_records)
         super().log(ctx, f"CLIP embeddings computed: {len(valid_files)}")
-

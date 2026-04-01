@@ -1,4 +1,5 @@
 import os.path
+from operator import itemgetter
 
 import torch
 import numpy as np
@@ -26,9 +27,9 @@ class PortfolioOptimizerNode(Node):
         self.device = device
 
     def run(self, ctx):
-
-        files = ctx.get("files")
-        embeddings = ctx.get("embeddings")
+        records = ctx.get("records")
+        files = [record.name for record in records]
+        embeddings = [record.clip for record in records]
         scores = ctx.get("scores")
 
         emb_matrix = np.asarray(embeddings)
@@ -130,14 +131,15 @@ class PortfolioOptimizerNode(Node):
         # ---------- map back ----------
         final_idx = [candidate_idx[i] for i in selected]
 
-        selected_files = [files[i] for i in final_idx]
-
-        ctx.set("selected_images", selected_files)
+        getter = itemgetter(*final_idx)
+        selected_records = getter(records)
+        ctx.set("selected_records", selected_records)
         # state更新选片结果
         output_scores = ctx.get("output_scores")
-        update_results([{"file": os.path.basename(f), **output_scores[f]} for f in selected_files], ctx.get("task_id"))
+        update_results([{"name": os.path.basename(record.name), **output_scores[record.name]}
+                        for record in selected_records], ctx.get("task_id"))
 
-        for f in selected_files:
-            super().log(ctx, f"{scores[f]['total_score']}, {f}")
+        for record in selected_records:
+            super().log(ctx, f"{scores[record.name]['total_score']}, {record.name}")
 
-        super().log(ctx,f"PortfolioOptimizer finished: {len(selected_files)} images")
+        super().log(ctx,f"PortfolioOptimizer finished: {len(selected_records)} images")

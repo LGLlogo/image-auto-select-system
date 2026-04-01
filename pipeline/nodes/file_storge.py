@@ -5,17 +5,22 @@ import shutil
 import zipfile
 from pathlib import Path
 
+import cv2
 from PIL import Image
 
 from backend.state import TaskManager
 from pipeline.core.node import Node
 
 
-def make_thumb(src, dst):
+def make_thumb(dst, cv2_image):
     """缩略图"""
-    img = Image.open(src)
-    img.thumbnail((400, 400))
-    img.save(dst, quality=85)
+    h, w = cv2_image.shape[:2]
+    # --- 按比例缩放 ---
+    # 2. 计算缩放比例 (新宽度 / 原宽度) 宽度缩小到 30%
+    scale_factor = float(w * 0.3) / w
+
+    medium_img = cv2.resize(cv2_image, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_LINEAR)
+    cv2.imwrite(dst, medium_img)
 
 
 class FileStorgeNode(Node):
@@ -75,29 +80,29 @@ class FileStorgeNode(Node):
         """压缩图片"""
         task_id = ctx.get("task_id")
         _state = TaskManager.get_state(task_id)
-        images = ctx.get('selected_images')
+        records = ctx.get("records")
+        files = [record.name for record in records]
+        cv2_images = [record.image for record in records]
         scores = ctx.get("scores")
         # 移动图片到目标目录
         moved_files = []
-        total = len(images)
-        for src_path in images:
-            if os.path.exists(src_path):
-                # 评分_文件名
-                filename = f"{round(scores[src_path]['total_score'], 3):.3f}_{os.path.basename(src_path)}"
-                dest_path = os.path.join(self.images_dir, filename)
-                dest_thumb_path = os.path.join(self.thumb_dir, filename)
-                try:
-                    shutil.copy(src_path, dest_path)
-                    # 缩略图
-                    make_thumb(src_path, dest_thumb_path)
-                    moved_files.append(dest_path)
-                    self.node_progress[self.thumb_dir] += 1
-                    self.emit_total_progress(total=total)
-                    super().info(ctx, f"已复制: {src_path} -> {dest_path}")
-                except Exception as e:
-                    super().error(ctx, f"移动文件 {src_path} 时出错: {e}")
-            else:
-                super().error(ctx, f"警告: 文件不存在 {src_path}")
+        total = len(files)
+        for file_name, cv2_image in zip(files, cv2_images):
+            # 评分_文件名
+            filename = f"{round(scores[file_name]['total_score'], 3):.3f}_{file_name}"
+            dest_path = os.path.join(self.images_dir, filename)
+            dest_thumb_path = os.path.join(self.thumb_dir, filename)
+            try:
+                cv2.imwrite(dest_path, cv2_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                # shutil.copy(src_path, dest_path)
+                # 缩略图
+                make_thumb(dest_thumb_path, cv2_image)
+                moved_files.append(dest_path)
+                self.node_progress[self.thumb_dir] += 1
+                self.emit_total_progress(total=total)
+                super().info(ctx, f" {dest_path} 图片已生成")
+            except Exception as e:
+                super().error(ctx, f"图片 {dest_path} 生成时出错: {e}")
 
         # 创建ZIP文件
         zip_filepath = f"images_{task_id}.zip"

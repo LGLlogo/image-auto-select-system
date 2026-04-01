@@ -16,8 +16,8 @@ export default function ResultTable() {
 
     const columns = [
         {
-            title: "File",
-            dataIndex: "file",
+            title: "Name",
+            dataIndex: "name",
             render: (v, row, idx) => {
                 return (
                     <Popover
@@ -28,10 +28,10 @@ export default function ResultTable() {
                                 <Image
                                     key={idx}
                                     width={200}
-                                    src={getThumbPreview(`${formatScore(row.total_score, 3)}_${row.file}`)}
+                                    src={getThumbPreview(`${formatScore(row.total_score, 3)}_${row.name}`)}
                                     loading="lazy"
                                     preview={{
-                                        src: getImgPreview(`${formatScore(row.total_score, 3)}_${row.file}`),
+                                        src: getImgPreview(`${formatScore(row.total_score, 3)}_${row.name}`),
                                         visible: false,
                                         mask: '点击查看大图',
                                         onOpenChange: (open) => console.log(open),
