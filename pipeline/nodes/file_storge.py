@@ -42,11 +42,12 @@ class FileStorgeNode(Node):
             self.data_dir: 0
         }
         self.file_storge_weight = {
-            self.images_dir: 0.35,
-            self.logs_dir: 0.3,
-            self.thumb_dir: 0.15,
-            self.data_dir: 0.2
+            self.images_dir: 0,
+            self.logs_dir: 0,
+            self.thumb_dir: 0,
+            self.data_dir: 0
         }
+        self.total = 0
 
     def _create_directories(self, ctx):
         """创建必要的目录"""
@@ -58,22 +59,42 @@ class FileStorgeNode(Node):
             except Exception as e:
                 super().info(ctx, f"创建目录 '{directory}' 时出错: {e}")
 
+    def _count_files(self, ctx):
+        records = ctx.get("records")
+        self.file_storge_weight[self.images_dir] = len(records)
+        self.file_storge_weight[self.thumb_dir] = len(records)
+
+        # 确保日志目录存在
+        logs_path = Path(self.logs_dir)
+        if not logs_path.exists():
+            super().error(ctx, f"日志目录不存在: {self.logs_dir}")
+            raise FileNotFoundError(f"日志目录不存在: {self.logs_dir}")
+
+        # 获取所有日志文件
+        self.log_files = list(logs_path.glob("*.*"))
+        if not self.log_files:
+            super().error(ctx, "日志目录中没有找到.log文件")
+            return
+
+        # 创建ZIP文件并添加日志文件
+        self.file_storge_weight[self.logs_dir] = len(self.log_files)
+        self.file_storge_weight[self.data_dir] = 1
+
+        self.total = sum(v for v in self.file_storge_weight.values())
+
     def run(self, ctx):
         self._create_directories(ctx)
+        self._count_files(ctx)
         self.zip_images(ctx)
         self.zip_logs(ctx)
         self.data_storge(ctx)
 
-    def emit_total_progress(self, total):
-        sub_total = 0
-
-        for node, percent in self.node_progress.items():
-            weight = self.file_storge_weight.get(node, 1)
-            sub_total += percent * weight
+    def emit_total_progress(self):
+        sub_total = sum(percent * 1.0 for percent in self.node_progress.values())
 
         self._emit(
             # 权重 * percent
-            self.progress.callback(sub_total, total)
+            self.progress.callback(sub_total, self.total)
         )
 
     def zip_images(self, ctx):
@@ -86,7 +107,6 @@ class FileStorgeNode(Node):
         scores = ctx.get("scores")
         # 移动图片到目标目录
         moved_files = []
-        total = len(files)
         for file_name, cv2_image in zip(files, cv2_images):
             # 评分_文件名
             filename = f"{round(scores[file_name]['total_score'], 3):.3f}_{file_name}"
@@ -99,14 +119,13 @@ class FileStorgeNode(Node):
                 make_thumb(dest_thumb_path, cv2_image)
                 moved_files.append(dest_path)
                 self.node_progress[self.thumb_dir] += 1
-                self.emit_total_progress(total=total)
+                self.emit_total_progress()
                 super().info(ctx, f" {dest_path} 图片已生成")
             except Exception as e:
                 super().error(ctx, f"图片 {dest_path} 生成时出错: {e}")
 
         # 创建ZIP文件
         zip_filepath = f"images_{task_id}.zip"
-        total = len(moved_files)
         try:
             with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_STORED, compresslevel=1) as zipf:
                 for file_path in moved_files:
@@ -114,7 +133,7 @@ class FileStorgeNode(Node):
                     arcname = os.path.basename(file_path)
                     zipf.write(file_path, arcname)
                     self.node_progress[self.images_dir] += 1
-                    self.emit_total_progress(total=total)
+                    self.emit_total_progress()
             super().info(ctx, f"最终选图压缩文件已创建: {zip_filepath}")
             return zip_filepath
         except Exception as e:
@@ -127,27 +146,13 @@ class FileStorgeNode(Node):
         _state = TaskManager.get_state(task_id)
         zip_filename = f"logs_backup_{task_id}.zip"
 
-        # 确保日志目录存在
-        logs_path = Path(self.logs_dir)
-        if not logs_path.exists():
-            super().error(ctx, f"日志目录不存在: {self.logs_dir}")
-            raise FileNotFoundError(f"日志目录不存在: {self.logs_dir}")
-
-        # 获取所有日志文件
-        log_files = list(logs_path.glob("*.*"))
-        if not log_files:
-            super().error(ctx, "日志目录中没有找到.log文件")
-            return
-
-        # 创建ZIP文件并添加日志文件
-        total = len(log_files)
         try:
             with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_STORED, compresslevel=1) as zipf:
-                for log_file in log_files:
+                for log_file in self.log_files:
                     # 添加文件到ZIP，保持目录结构
                     zipf.write(log_file, log_file.name)
                     self.node_progress[self.logs_dir] += 1
-                    self.emit_total_progress(total=total)
+                    self.emit_total_progress()
                     super().info(ctx, f"已添加日志文件: {log_file.name}")
 
             super().info(ctx, f"日志文件已成功压缩到: {zip_filename}")
@@ -171,7 +176,7 @@ class FileStorgeNode(Node):
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(state_data, f, ensure_ascii=False, indent=2)
                 self.node_progress[self.data_dir] += 1
-                self.emit_total_progress(total=1)
+                self.emit_total_progress()
             super().info(ctx, f"分析数据已保存: {filepath} ")
         except Exception as e:
             super().error(ctx, f"保存状态失败: {e}")

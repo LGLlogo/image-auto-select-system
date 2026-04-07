@@ -1,4 +1,4 @@
-import { Table, Image, Popover, Button } from "antd"
+import { Table, Image, Popover, Button, Tag } from "antd"
 import { useStore } from "../store"
 import { getImgPreview, getThumbPreview } from "../api"
 import ExplanationTags from "./ExplanationTags"
@@ -11,8 +11,22 @@ export default function ResultTable() {
 
     const sorted = [...results].sort((a, b) => b.total_score - a.total_score)
 
-    const formatScore = (v, n = 2) =>
-        v == null ? "-" : v.toFixed(n)
+    const formatScore = (v, n = 2) => {
+        let score = v== null ? "-" : v.toFixed(n)
+        let color = 'black'; // 默认颜色
+
+        if (score >= 0.6) {
+            color = 'green';
+            // 也可以返回一个 Tag 组件，视觉效果更好
+            return <Tag color={color}>{score}</Tag>;
+        } else if (score >= 0.4) {
+            color = 'orange';
+            return <Tag color={color}>{score}</Tag>;
+        } else {
+            color = 'red';
+            return <Tag color={color}>{score}</Tag>;
+        }
+    }
 
     const columns = [
         {
@@ -22,7 +36,7 @@ export default function ResultTable() {
                 return (
                     <Popover
                         placement="right"
-                        bodyStyle={{ padding: '20px', width: 432}}
+                        bodyStyle={{ padding: '20px', width: 432 }}
                         content={
                             <div>
                                 <Image

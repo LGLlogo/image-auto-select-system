@@ -53,19 +53,20 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-# if __name__ == "__main__":
-#     # 直接调用
-#     from backend.pipeline_runner import run_pipeline_workflow
-#
-#     args = parse_arguments()
-#     task_id = TaskManager().create_task()
-#     if args.folder:
-#         # 远程
-#         run_pipeline_workflow("", args.folder, task_id, None)
-#     else:
-#         # 本地
-#         run_pipeline_workflow("C:\\Users\\looge\\Desktop\\images\\1031", "", task_id, None)
-
 if __name__ == "__main__":
-    # fastapi 服务
-    uvicorn.run("backend.server:app", host="localhost", port=8000, reload=True)
+    # 直接调用
+    from backend.pipeline_runner import run_pipeline_workflow
+
+    # args = parse_arguments()
+    task_id = TaskManager().create_task()
+    # if args.folder:
+    #     # 远程
+    #     run_pipeline_workflow("", args.folder, task_id, None)
+    # else:
+        # 本地
+    # print(os.path.abspath(os.path.join("zip", "IMG_8891.zip")))
+    run_pipeline_workflow(os.path.abspath(os.path.join("zip", "IMG_8891.zip")), "", task_id, None)
+
+# if __name__ == "__main__":
+#     # fastapi 服务
+#     uvicorn.run("backend.server:app", host="localhost", port=8000, reload=True)

@@ -73,7 +73,7 @@ jobs: # 定义工作流中的作业
           echo "=========================================="
           # 获取quark目录
           FOLDER="${{ github.event.inputs.folder_name }}"
-          python pipeline/main.py --folder $FOLDER
+          python main.py
 
       - name: Upload image artifact 上传最终选图和日志
         if: success()
