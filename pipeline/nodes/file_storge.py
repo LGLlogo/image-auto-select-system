@@ -187,9 +187,10 @@ class FileStorgeNode(Node):
                 for item in self.log_files:
                     if item.is_file() or item.is_symlink():
                         item.unlink()
+                        super().info(ctx, f"日志临时文件已清空: {item}")
                     elif item.is_dir():
                         shutil.rmtree(item)
-                super().info(ctx, f"日志临时文件已清空: {zip_filename}")
+                        super().info(ctx, f"日志临时文件已清空: {item}")
             return zip_filename
         except Exception as e:
             super().error(ctx, f"创建ZIP文件时出错: {e}")
