@@ -148,7 +148,7 @@ class FileStorgeNode(Node):
             with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                 for file_name, cv2_image in zip(files, cv2_images):
                     # cv2.IMWRITE_JPEG_QUALITY 用于设置JPEG质量 (0-100)，100为最高质量
-                    is_success, img_bytes = cv2.imencode(cv2_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                    is_success, img_bytes = cv2.imencode('.jpg', cv2_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
                     if is_success:
                         # 将编码后的字节数据写入ZIP包
