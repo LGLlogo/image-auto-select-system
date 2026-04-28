@@ -1,0 +1,8 @@
+dir:
+  images: 'images'
+  logs: 'logs'
+  thumbs: 'thumbs'
+  data: 'data'
+  is_create_thumb: false
+
+is_clear_temp_file: true
