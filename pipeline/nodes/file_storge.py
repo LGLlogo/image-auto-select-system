@@ -181,29 +181,37 @@ class FileStorgeNode(Node):
                     self.node_progress[cfg.logs_dir] += 1
                     self.emit_total_progress()
                     super().info(ctx, f"已添加日志文件: {log_file.name}")
-
             super().info(ctx, f"日志文件已成功压缩到: {zip_filename}")
+            if cfg.is_clear_temp_file:
+                # 遍历并删除内容
+                for item in self.log_files:
+                    if item.is_file() or item.is_symlink():
+                        item.unlink()
+                    elif item.is_dir():
+                        shutil.rmtree(item)
+                super().info(ctx, f"日志临时文件已清空: {zip_filename}")
             return zip_filename
         except Exception as e:
             super().error(ctx, f"创建ZIP文件时出错: {e}")
             raise
 
     def data_storge(self, ctx):
-        task_id = ctx.get("task_id")
-        state = TaskManager.get_state(task_id)
-        state_data = {
-            "task_id": state.task_id,
-            "nodes": state.nodes,
-            "results": state.results,
-            "dag": state.dag
-        }
-        # 保存到JSON文件
-        try:
-            filepath = os.path.join(cfg.data_dir, f"state_{task_id}.json")
-            with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(state_data, f, ensure_ascii=False, indent=2)
-                self.node_progress[cfg.data_dir] += 1
-                self.emit_total_progress()
-            super().info(ctx, f"分析数据已保存: {filepath} ")
-        except Exception as e:
-            super().error(ctx, f"保存状态失败: {e}")
+        if not cfg.is_clear_temp_file:
+            task_id = ctx.get("task_id")
+            state = TaskManager.get_state(task_id)
+            state_data = {
+                "task_id": state.task_id,
+                "nodes": state.nodes,
+                "results": state.results,
+                "dag": state.dag
+            }
+            # 保存到JSON文件
+            try:
+                filepath = os.path.join(cfg.data_dir, f"state_{task_id}.json")
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    json.dump(state_data, f, ensure_ascii=False, indent=2)
+                    self.node_progress[cfg.data_dir] += 1
+                    self.emit_total_progress()
+                super().info(ctx, f"分析数据已保存: {filepath} ")
+            except Exception as e:
+                super().error(ctx, f"保存状态失败: {e}")
