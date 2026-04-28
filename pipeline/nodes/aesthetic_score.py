@@ -1,3 +1,5 @@
+import numpy as np
+
 from pipeline.core.node import Node
 import torch
 from pipeline.models.aesthetic_model import load_aesthetic_model
@@ -21,7 +23,7 @@ class AestheticScoreNode(Node):
             self._emit(
                 self.progress.callback(mid, total)
             )
-            emb = torch.tensor(batch).float()
+            emb = torch.from_numpy(np.array(batch)).float()
             with torch.no_grad():
                 scores = self.model(emb).squeeze()
 
